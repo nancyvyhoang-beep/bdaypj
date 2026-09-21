@@ -11,6 +11,8 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <!-- MQTT Paho Client -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+  <!-- QRCode.js CDN for Dynamic QR Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   
   <!-- Local Stylesheet -->
   <link rel="stylesheet" href="stylesheet.css">
@@ -45,7 +47,6 @@
       background-image: radial-gradient(circle at center, rgba(213, 255, 0, 0.05) 0%, transparent 70%),
                         repeating-radial-gradient(circle at center, rgba(255, 255, 255, 0.012) 0, rgba(255, 255, 255, 0.012) 1px, transparent 1px, transparent 24px);
     }
-    /* Flame capsule styling matching brand */
     .capsule-flame {
       background: linear-gradient(180deg, #FFFFFF 0%, #F5FFA6 40%, #D5FF00 100%);
       box-shadow: 0 0 20px rgba(213, 255, 0, 0.9), 0 0 40px rgba(213, 255, 0, 0.6), inset 0 0 8px #FFFFFF;
@@ -69,8 +70,17 @@
       background: linear-gradient(180deg, #FFFFFF 0%, #E2E8F0 50%, #94A3B8 100%);
       box-shadow: inset 0 2px 4px rgba(255,255,255,0.9), 0 4px 15px rgba(0,0,0,0.6);
     }
-    .swarm-tile {
-      transition: all 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+    .swarm-point {
+      transition: all 1.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+    .morph-to-candle {
+      transform: translate(0, -180px) scale(0.18) !important;
+      opacity: 0 !important;
+      transition: all 1.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    #qrcode-canvas img, #qrcode-canvas canvas {
+      border-radius: 12px;
+      margin: 0 auto;
     }
   </style>
 </head>
@@ -80,7 +90,7 @@
   <!-- ==================== GUEST INTERFACE ==================== -->
   <main id="guest-view" class="w-full max-w-md mx-auto my-auto flex flex-col items-center py-4">
     
-    <!-- Brand Header -->
+    <!-- Header -->
     <header class="flex items-center gap-3 mb-6">
       <img src="https://a5.atherlabs.com/images/a5-logo-03d92851fcd8.webp" alt="Ather Labs 5th Birthday" class="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(213,255,0,0.5)]">
       <div class="flex flex-col">
@@ -140,25 +150,20 @@
       <h2 class="text-xl font-bold text-white mb-1">Make A 5th Birthday Wish</h2>
       <p class="text-xs text-slate-400 mb-6">Tap the flame to extinguish the candle & make your wish!</p>
 
-      <!-- Cake Replica -->
       <div onclick="blowCakeGuest()" class="cursor-pointer relative flex flex-col items-center my-4 select-none group">
-        <!-- Flame Capsule -->
         <div id="cake-flame-guest" class="capsule-flame w-6 h-10 rounded-full mb-1 transition-all duration-500"></div>
         <div id="cake-smoke-guest" class="w-2 h-8 rounded-full bg-white/40 blur-xs -mt-8 opacity-0 transition-opacity duration-1000 pointer-events-none"></div>
 
-        <!-- Pillar Candle '5' -->
         <div class="candle-pillar w-12 h-14 rounded-t-xl flex items-center justify-center -mb-0.5 z-10">
           <span class="text-xl font-black text-slate-900 tracking-tight">5</span>
         </div>
 
-        <!-- Tier 1 -->
         <div class="cake-layer-top w-56 h-14 rounded-2xl flex items-center justify-center -mb-2 z-20 px-3">
           <span class="text-xs font-black tracking-widest text-brand-volt uppercase drop-shadow-[0_0_8px_rgba(213,255,0,0.5)]">
             ATHER LABS · 5TH
           </span>
         </div>
 
-        <!-- Tier 2 -->
         <div class="cake-layer-bottom w-64 h-16 rounded-2xl flex items-center justify-center z-10 px-4">
           <span class="text-xs font-black tracking-widest text-white uppercase">
             AMBITION, AMPLIFIED
@@ -201,7 +206,6 @@
         </button>
       </form>
 
-      <!-- Success Notice -->
       <div id="guest-success" class="hidden flex flex-col items-center text-center py-6">
         <div class="w-12 h-12 rounded-full bg-brand-volt/10 border border-brand-volt flex items-center justify-center text-brand-volt text-xl mb-3">
           ✓
@@ -216,14 +220,14 @@
   </main>
 
   <!-- ==================== ADMIN CONTROL PANEL (#control) ==================== -->
-  <section id="control-view" class="w-full max-w-2xl mx-auto my-auto flex flex-col items-center py-6 hidden">
+  <section id="control-view" class="w-full max-w-3xl mx-auto my-auto flex flex-col items-center py-6 hidden">
     <div class="w-full bg-brand-card border border-brand-border rounded-2xl p-6 backdrop-blur-xl shadow-2xl flex flex-col gap-6">
       
       <div class="flex items-center justify-between border-b border-brand-border pb-4">
         <div class="flex items-center gap-3">
           <img src="https://a5.atherlabs.com/images/a5-logo-03d92851fcd8.webp" alt="Logo" class="w-8 h-8 object-contain">
           <div>
-            <h1 class="text-base font-bold text-white uppercase tracking-wider">Show Controller</h1>
+            <h1 class="text-base font-bold text-white uppercase tracking-wider">Show Controller & Wish Admin</h1>
             <span class="text-[11px] text-brand-volt font-mono">STAGE LED MASTER · REAL-TIME SYNC</span>
           </div>
         </div>
@@ -232,63 +236,93 @@
         </span>
       </div>
 
-      <!-- Route Links Hub -->
-      <div class="bg-black/50 border border-brand-border/60 rounded-xl p-4 flex flex-col gap-2">
-        <span class="text-xs font-bold tracking-wider text-slate-400 uppercase">Dedicated Route Hub</span>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
-          <button onclick="copyRouteLink('')" class="py-2 px-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-left flex justify-between items-center">
-            <span>Guest URL (QR)</span>
-            <span class="text-brand-volt font-mono text-[10px]">Copy</span>
+      <!-- Route Links Hub + Dynamic QR Code Part -->
+      <div class="bg-black/50 border border-brand-border/60 rounded-xl p-4 flex flex-col md:flex-row gap-5 items-center">
+        <!-- QR Code Preview Box -->
+        <div class="flex flex-col items-center gap-2 shrink-0">
+          <div id="qrcode-box" class="p-3 bg-white rounded-2xl shadow-[0_0_20px_rgba(213,255,0,0.3)] cursor-pointer" onclick="downloadQRCode()" title="Click to download QR code image">
+            <div id="qrcode-canvas"></div>
+          </div>
+          <button onclick="downloadQRCode()" class="text-[11px] font-bold text-brand-volt hover:underline flex items-center gap-1">
+            📥 Download QR Code (PNG)
           </button>
-          <button onclick="copyRouteLink('#control')" class="py-2 px-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-left flex justify-between items-center">
-            <span>Admin Remote</span>
-            <span class="text-brand-volt font-mono text-[10px]">Copy</span>
-          </button>
-          <button onclick="copyRouteLink('#led')" class="py-2 px-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-left flex justify-between items-center">
-            <span>Show LED View</span>
-            <span class="text-brand-volt font-mono text-[10px]">Copy</span>
-          </button>
+        </div>
+
+        <!-- Links Hub -->
+        <div class="flex-1 w-full flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold tracking-wider text-slate-300 uppercase">Guest QR & Direct Routes</span>
+            <span class="text-[10px] text-emerald-400 font-mono">Auto-synced with current URL</span>
+          </div>
+
+          <div class="flex flex-col gap-2 text-xs">
+            <button onclick="copyRouteLink('')" class="py-2 px-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-left flex justify-between items-center transition-all">
+              <span class="text-white font-medium">Guest Access (QR URL)</span>
+              <span class="text-brand-volt font-mono text-[10px]">Copy Link</span>
+            </button>
+            <button onclick="copyRouteLink('#control')" class="py-2 px-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-left flex justify-between items-center transition-all">
+              <span class="text-white font-medium">Admin Remote URL</span>
+              <span class="text-brand-volt font-mono text-[10px]">Copy Link</span>
+            </button>
+            <button onclick="copyRouteLink('#led')" class="py-2 px-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-left flex justify-between items-center transition-all">
+              <span class="text-white font-medium">Show LED Screen URL</span>
+              <span class="text-brand-volt font-mono text-[10px]">Copy Link</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Stage Triggers -->
+      <!-- Stage Transitions -->
       <div class="flex flex-col gap-3">
         <span class="text-xs font-bold tracking-wider text-slate-400 uppercase">Stage Transitions</span>
-        <div class="grid grid-cols-2 gap-3">
-          <button onclick="sendRemoteStage(1)" class="p-4 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all group">
-            <span class="text-xs text-slate-400 block mb-1">STAGE 2.1</span>
-            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Compact Wish Wall</span>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+          <button onclick="sendRemoteStage(1)" class="p-3.5 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all">
+            <span class="text-[10px] text-slate-400 block">STAGE 2.1</span>
+            <span class="text-xs font-bold text-white">Wish Wall</span>
           </button>
           
-          <button onclick="sendRemoteStage(2)" class="p-4 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all group">
-            <span class="text-xs text-slate-400 block mb-1">STAGE 2.2</span>
-            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Form Full Matrix '5'</span>
+          <button onclick="sendRemoteStage(2)" class="p-3.5 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all">
+            <span class="text-[10px] text-slate-400 block">STAGE 2.2</span>
+            <span class="text-xs font-bold text-white">Form '5' Matrix</span>
           </button>
 
-          <button onclick="sendRemoteStage(3)" class="p-4 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all group">
-            <span class="text-xs text-slate-400 block mb-1">STAGE 2.3</span>
-            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Giant Cyber Cake (Light)</span>
+          <button onclick="sendRemoteStage(3)" class="p-3.5 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all">
+            <span class="text-[10px] text-slate-400 block">STAGE 2.3</span>
+            <span class="text-xs font-bold text-white">Morph & Light Cake</span>
           </button>
 
-          <button onclick="sendRemoteStage(4)" class="p-4 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all group">
-            <span class="text-xs text-slate-400 block mb-1">STAGE 2.4</span>
-            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Blow Candle & Celebration</span>
+          <button onclick="sendRemoteStage(4)" class="p-3.5 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all">
+            <span class="text-[10px] text-slate-400 block">STAGE 2.4</span>
+            <span class="text-xs font-bold text-white">Extinguish & Show</span>
           </button>
         </div>
       </div>
 
       <!-- Action Triggers -->
-      <div class="flex gap-3">
-        <button onclick="sendRemoteAction('fireworks')" class="flex-1 py-3 px-4 rounded-xl bg-brand-volt text-black font-bold text-xs uppercase tracking-wider hover:bg-brand-voltGlow transition-all shadow-[0_0_15px_rgba(213,255,0,0.2)]">
-          🎆 Launch Fireworks Burst
+      <div class="flex gap-2">
+        <button onclick="sendRemoteAction('fireworks')" class="flex-1 py-2.5 px-4 rounded-xl bg-brand-volt text-black font-bold text-xs uppercase tracking-wider hover:bg-brand-voltGlow transition-all">
+          🎆 Fireworks Burst
         </button>
-        <button onclick="sendRemoteAction('extinguish_led_cake')" class="py-3 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-xs uppercase tracking-wider hover:bg-white/20 transition-all">
-          Blow LED Flame
+        <button onclick="sendRemoteAction('extinguish_led_cake')" class="py-2.5 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-xs uppercase tracking-wider hover:bg-white/20 transition-all">
+          Blow Flame
         </button>
-        <button onclick="sendRemoteAction('clear')" class="py-3 px-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-xs uppercase tracking-wider hover:bg-red-500/20 transition-all">
-          Clear
+        <button onclick="sendRemoteAction('clear')" class="py-2.5 px-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-xs uppercase tracking-wider hover:bg-red-500/20 transition-all">
+          Clear Stage
         </button>
       </div>
+
+      <!-- Wish Management Moderation Part -->
+      <div class="flex flex-col gap-3 pt-4 border-t border-brand-border/70">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold tracking-wider text-slate-300 uppercase">Live Wishes Moderation (<span id="admin-wish-total" class="text-brand-volt">0</span>)</span>
+          <button onclick="refreshAdminList()" class="text-[11px] text-brand-volt hover:underline">Refresh List</button>
+        </div>
+
+        <div id="admin-wish-list" class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+          <div class="text-center py-6 text-xs text-slate-500">No wishes received yet.</div>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -305,9 +339,6 @@
         </div>
       </div>
       <div class="flex items-center gap-3">
-        <span class="text-xs font-mono px-3 py-1 rounded-full bg-brand-volt/10 border border-brand-volt/30 text-brand-volt">
-          STAGE DISPLAY VIEW
-        </span>
         <button onclick="document.documentElement.requestFullscreen()" class="text-xs px-3 py-1 rounded-full bg-white/10 text-white hover:bg-white/20">
           Fullscreen ⛶
         </button>
@@ -315,63 +346,55 @@
     </div>
 
     <!-- Central Interactive Arena -->
-    <div id="led-arena" class="relative flex-1 w-full flex items-center justify-center overflow-hidden my-3">
+    <div id="led-arena" class="relative flex-1 w-full flex items-center justify-center overflow-hidden my-auto">
       
       <!-- Stage 2.1: Compact Horizontal Wish Grid -->
       <div id="led-stage-1" class="absolute inset-0 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-4 overflow-y-auto content-start">
-        <!-- Live Wish Cards Stream In Here -->
+        <!-- Wish cards stream here -->
       </div>
 
-      <!-- Stage 2.2: The Elastic Swarm Digit '5' -->
-      <div id="led-stage-2" class="relative w-full h-full flex items-center justify-center hidden">
-        <div id="swarm-container" class="relative w-full h-full flex items-center justify-center"></div>
+      <!-- Stage 2.2: The Precise Digit '5' Matrix -->
+      <div id="led-stage-2" class="relative w-full h-full flex items-center justify-center hidden transition-all duration-1000">
+        <div id="swarm-container" class="relative w-full h-full flex items-center justify-center transition-all duration-1000"></div>
       </div>
 
       <!-- Stage 2.3 & 2.4: Giant Cyber Birthday Cake -->
       <div id="led-stage-3" class="relative flex flex-col items-center justify-center hidden">
-        <!-- Giant Flame Capsule (Crisp Glow, No Foggy Blur) -->
         <div id="cake-flame-led" class="capsule-flame w-16 h-28 rounded-full mb-3 transition-all duration-700"></div>
         <div id="cake-smoke-led" class="w-4 h-24 rounded-full bg-white/40 blur-md -mt-24 opacity-0 transition-opacity duration-1000 pointer-events-none"></div>
 
-        <!-- Pillar Candle '5' -->
         <div class="candle-pillar w-28 h-36 rounded-t-3xl flex items-center justify-center -mb-1 z-10 shadow-2xl">
           <span class="text-5xl font-black text-slate-900 tracking-tight">5</span>
         </div>
 
-        <!-- Tier 1 -->
         <div class="cake-layer-top w-[500px] h-28 rounded-3xl flex items-center justify-center -mb-3 z-20 px-6">
           <span class="text-2xl font-black tracking-widest text-brand-volt uppercase drop-shadow-[0_0_15px_rgba(213,255,0,0.6)]">
             ATHER LABS · 5TH
           </span>
         </div>
 
-        <!-- Tier 2 -->
         <div class="cake-layer-bottom w-[600px] h-32 rounded-3xl flex items-center justify-center z-10 px-8">
           <span class="text-2xl font-black tracking-widest text-white uppercase">
             AMBITION, AMPLIFIED
           </span>
         </div>
 
-        <!-- Stage 2.4 Celebration Overlay Wishes & Text -->
-        <div id="stage-4-celebration-banner" class="hidden mt-6 flex flex-col items-center animate-bounce">
+        <div id="stage-4-celebration-banner" class="hidden mt-8 flex flex-col items-center animate-bounce">
           <span class="text-3xl font-black tracking-[0.4em] text-brand-volt uppercase drop-shadow-[0_0_20px_#D5FF00]">
             HAPPY 5TH ANNIVERSARY!
-          </span>
-          <span id="stage-4-featured-wish" class="text-sm italic text-slate-200 mt-2 font-mono">
-            "Ambition Amplified · Conquering New Milestones"
           </span>
         </div>
       </div>
     </div>
 
-    <!-- Stage Footer Broadcast Bar -->
-    <div class="z-30 bg-black/90 border-t border-brand-border/80 pt-3 flex justify-between items-center text-xs font-mono text-slate-400">
+    <!-- Stage Footer Bar -->
+    <div class="z-30 pt-2 flex justify-between items-center text-xs font-mono text-slate-500">
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-brand-volt animate-ping"></span>
-        <span class="text-white">TOTAL BROADCAST WISHES: <span id="wish-counter" class="text-brand-volt font-bold">0</span></span>
+        <span class="text-slate-300">WISHES: <span id="wish-counter" class="text-brand-volt font-bold">0</span></span>
       </div>
       <div>
-        SCAN QR CODE ON SCREEN TO PARTICIPATE
+        ATHER LABS LIVE
       </div>
     </div>
   </section>
@@ -380,10 +403,11 @@
   <script>
     const state = {
       wishes: [],
-      processedWishIds: new Set(), // Chống duplicate lời chúc
+      processedWishIds: new Set(),
       currentStage: 1,
       mqttClient: null,
-      channel: 'atherlabs_5th_bday_prod_2026'
+      channel: 'atherlabs_5th_bday_prod_2026',
+      qrInstance: null
     };
 
     // Route Switching
@@ -398,6 +422,8 @@
 
       if (hash === '#control' || view === 'control') {
         document.getElementById('control-view').classList.remove('hidden');
+        renderAdminWishList();
+        generateControlQRCode();
       } else if (hash === '#led' || view === 'led') {
         document.getElementById('led-view').classList.remove('hidden');
       } else {
@@ -410,6 +436,46 @@
       checkRouting();
       initRealtimeSync();
     });
+
+    // Dynamic QR Code Generation in Control Panel
+    function generateControlQRCode() {
+      const qrContainer = document.getElementById('qrcode-canvas');
+      if (!qrContainer) return;
+      qrContainer.innerHTML = '';
+
+      // Tự động lấy URL gốc của ứng dụng (trỏ thẳng vào giao diện khách)
+      const guestUrl = window.location.origin + window.location.pathname;
+
+      state.qrInstance = new QRCode(qrContainer, {
+        text: guestUrl,
+        width: 140,
+        height: 140,
+        colorDark: "#000000",
+        colorLight: "#FFFFFF",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    }
+
+    function downloadQRCode() {
+      const qrCanvas = document.querySelector('#qrcode-canvas canvas');
+      const qrImg = document.querySelector('#qrcode-canvas img');
+      let dataUrl = '';
+
+      if (qrCanvas) {
+        dataUrl = qrCanvas.toDataURL('image/png');
+      } else if (qrImg && qrImg.src) {
+        dataUrl = qrImg.src;
+      }
+
+      if (dataUrl) {
+        const link = document.createElement('a');
+        link.download = 'AtherLabs_5th_QR_Code.png';
+        link.href = dataUrl;
+        link.click();
+      } else {
+        alert('QR code is generating, please try again in a second.');
+      }
+    }
 
     // Guest Flow
     function nextGuestStep(step) {
@@ -460,7 +526,8 @@
         index: state.wishes.length + 1,
         name: name,
         message: message,
-        timeAgo: 'Just now'
+        timeAgo: 'Just now',
+        deleted: false
       };
 
       broadcastMessage('NEW_WISH', payload);
@@ -478,7 +545,7 @@
       }
     }
 
-    // Real-time Sync (MQTT Over WSS + Local Fallback with Deduplication)
+    // Real-time Sync
     const localBus = new BroadcastChannel('ather_bday_bus');
     localBus.onmessage = (e) => handleIncomingMessage(e.data);
 
@@ -528,6 +595,8 @@
         onReceiveWish(data.payload);
       } else if (data.type === 'SET_STAGE') {
         setStage(data.payload);
+      } else if (data.type === 'DELETE_WISH') {
+        deleteWishLocally(data.payload);
       } else if (data.type === 'ACTION') {
         if (data.payload === 'fireworks') triggerFireworks();
         if (data.payload === 'extinguish_led_cake') extinguishLedCake();
@@ -535,10 +604,9 @@
       }
     }
 
-    // Generate Wish Card HTML
     function createWishCardHtml(wish) {
       return `
-        <div id="card-${wish.id}" class="w-full bg-[#080B0F]/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between backdrop-blur-md shadow-lg transition-all hover:border-brand-volt/40 animate-fade-in">
+        <div id="card-${wish.id}" class="w-full bg-[#080B0F]/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between backdrop-blur-md shadow-lg transition-all hover:border-brand-volt/40">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2 overflow-hidden">
               <span class="w-6 h-6 rounded-lg bg-brand-volt text-black text-xs font-black flex items-center justify-center shrink-0">
@@ -566,21 +634,13 @@
     }
 
     function onReceiveWish(wish) {
-      // Deduplicate: Bỏ qua nếu lời chúc đã được tiếp nhận
       if (state.processedWishIds.has(wish.id)) return;
       state.processedWishIds.add(wish.id);
-
       state.wishes.push(wish);
+
       const counter = document.getElementById('wish-counter');
       if (counter) counter.innerText = state.wishes.length;
 
-      // Cập nhật banner ở Step 2.4 nếu có lời chúc mới nhất
-      const featured = document.getElementById('stage-4-featured-wish');
-      if (featured) {
-        featured.innerText = `"${escapeHtml(wish.message)}" — ${escapeHtml(wish.name)}`;
-      }
-
-      // Đưa vào Wish Wall (Stage 2.1)
       const wall = document.getElementById('led-stage-1');
       if (wall) {
         const cardWrapper = document.createElement('div');
@@ -588,87 +648,89 @@
         wall.prepend(cardWrapper.firstElementChild);
       }
 
-      // Nếu đang ở Stage 2.2 thì vẽ lại ma trận 5
       if (state.currentStage === 2) {
         buildFullSwarmDigit5();
       }
+
+      renderAdminWishList();
     }
 
-    // Tọa độ chuẩn 35 điểm neo tạo thành số 5 sắc nét
-    const fullDigit5Slots = [
-      // Thanh ngang trên cùng (Top bar)
-      {x: 0.15, y: 0.12}, {x: 0.25, y: 0.12}, {x: 0.35, y: 0.12}, {x: 0.45, y: 0.12}, {x: 0.55, y: 0.12}, {x: 0.65, y: 0.12}, {x: 0.75, y: 0.12}, {x: 0.85, y: 0.12},
-      // Cạnh dọc trên bên trái (Left vertical)
-      {x: 0.15, y: 0.20}, {x: 0.15, y: 0.28}, {x: 0.15, y: 0.36}, {x: 0.15, y: 0.44},
-      // Thanh ngang giữa (Middle bar)
-      {x: 0.25, y: 0.44}, {x: 0.35, y: 0.44}, {x: 0.45, y: 0.44}, {x: 0.55, y: 0.44}, {x: 0.65, y: 0.44}, {x: 0.75, y: 0.44},
-      // Vòng cung bên phải (Right arc)
-      {x: 0.82, y: 0.52}, {x: 0.85, y: 0.60}, {x: 0.85, y: 0.68}, {x: 0.82, y: 0.76},
-      // Đáy bo tròn dưới (Bottom curve back)
-      {x: 0.75, y: 0.84}, {x: 0.65, y: 0.88}, {x: 0.55, y: 0.88}, {x: 0.45, y: 0.88}, {x: 0.35, y: 0.86}, {x: 0.25, y: 0.82}, {x: 0.16, y: 0.74},
-      // Các điểm hạt hỗ trợ mật độ
-      {x: 0.20, y: 0.12}, {x: 0.50, y: 0.44}, {x: 0.80, y: 0.64}, {x: 0.70, y: 0.86}, {x: 0.40, y: 0.88}, {x: 0.15, y: 0.32}
+    // 24 Tọa độ chuẩn của số 5
+    const perfectDigit5Coords = [
+      {x: 0.22, y: 0.16}, {x: 0.32, y: 0.16}, {x: 0.42, y: 0.16}, {x: 0.52, y: 0.16}, {x: 0.62, y: 0.16}, {x: 0.72, y: 0.16}, {x: 0.82, y: 0.16},
+      {x: 0.22, y: 0.26}, {x: 0.22, y: 0.36}, {x: 0.22, y: 0.46},
+      {x: 0.32, y: 0.46}, {x: 0.42, y: 0.46}, {x: 0.52, y: 0.46}, {x: 0.62, y: 0.46}, {x: 0.72, y: 0.46},
+      {x: 0.80, y: 0.54}, {x: 0.84, y: 0.64}, {x: 0.80, y: 0.74},
+      {x: 0.72, y: 0.82}, {x: 0.62, y: 0.86}, {x: 0.52, y: 0.86}, {x: 0.42, y: 0.86}, {x: 0.32, y: 0.82}, {x: 0.24, y: 0.74}
     ];
 
-    // Tạo số 5 hoàn chỉnh: Dù ít lời chúc vẫn luôn đủ 35 điểm tạo hình số 5
     function buildFullSwarmDigit5() {
       const container = document.getElementById('swarm-container');
       if (!container) return;
       container.innerHTML = '';
+      container.classList.remove('morph-to-candle');
 
       const rect = container.getBoundingClientRect();
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
-      const scaleX = Math.min(rect.width * 0.75, 680);
-      const scaleY = Math.min(rect.height * 0.80, 700);
+      const scaleX = Math.min(rect.width * 0.75, 650);
+      const scaleY = Math.min(rect.height * 0.78, 680);
 
-      fullDigit5Slots.forEach((slot, idx) => {
+      perfectDigit5Coords.forEach((slot, idx) => {
         const posX = centerX - (scaleX / 2) + slot.x * scaleX;
         const posY = centerY - (scaleY / 2) + slot.y * scaleY;
 
         const tile = document.createElement('div');
-        tile.className = 'swarm-tile absolute px-2.5 py-1.5 rounded-xl border flex items-center justify-center text-[10px] select-none';
+        tile.className = 'swarm-point absolute w-10 h-10 rounded-full bg-brand-volt text-slate-950 font-black flex items-center justify-center text-sm shadow-[0_0_18px_#D5FF00] border-2 border-white select-none';
+        tile.innerHTML = `<span>5</span>`;
 
-        // Nếu có lời chúc thật thì gán tên khách, ngược lại tạo hạt năng lượng Neon Volt
-        const wish = state.wishes[idx % (state.wishes.length || 1)];
-        if (state.wishes.length > 0 && wish) {
-          tile.classList.add('bg-brand-volt', 'text-black', 'font-black', 'border-white', 'shadow-[0_0_15px_#D5FF00]');
-          tile.innerHTML = `<span class="truncate max-w-[130px]">★ ${escapeHtml(wish.name)}</span>`;
-        } else {
-          tile.classList.add('bg-[#D5FF00]/20', 'text-brand-volt', 'font-mono', 'border-brand-volt/40', 'shadow-[0_0_8px_rgba(213,255,0,0.3)]');
-          tile.innerHTML = `<span>#AtherLabs</span>`;
-        }
-
-        // Vị trí nổ ban đầu ngoài màn hình
         const randX = (Math.random() - 0.5) * rect.width * 1.5 + centerX;
         const randY = (Math.random() - 0.5) * rect.height * 1.5 + centerY;
         tile.style.left = `${randX}px`;
         tile.style.top = `${randY}px`;
-        tile.style.transform = `scale(0.1) rotate(${(Math.random() - 0.5) * 90}deg)`;
+        tile.style.transform = `scale(0.1)`;
         tile.style.opacity = '0';
         container.appendChild(tile);
 
-        // Hiệu ứng bay vào lắp ráp số 5
         requestAnimationFrame(() => {
           setTimeout(() => {
             tile.style.left = `${posX}px`;
             tile.style.top = `${posY}px`;
-            tile.style.transform = 'scale(1) rotate(0deg)';
+            tile.style.transform = 'scale(1)';
             tile.style.opacity = '1';
-          }, 40 + idx * 25);
+          }, 30 + idx * 25);
         });
       });
     }
 
     function setStage(stageNum) {
-      state.currentStage = stageNum;
       const s1 = document.getElementById('led-stage-1');
       const s2 = document.getElementById('led-stage-2');
       const s3 = document.getElementById('led-stage-3');
+      const container = document.getElementById('swarm-container');
       const flame = document.getElementById('cake-flame-led');
       const smoke = document.getElementById('cake-smoke-led');
       const banner = document.getElementById('stage-4-celebration-banner');
 
+      // Morphing 2.2 -> 2.3
+      if (state.currentStage === 2 && stageNum === 3) {
+        if (container) {
+          container.classList.add('morph-to-candle');
+        }
+        setTimeout(() => {
+          s2.classList.add('hidden');
+          s3.classList.remove('hidden');
+          if (flame) {
+            flame.style.opacity = '1';
+            flame.style.transform = 'scale(1)';
+          }
+          if (smoke) smoke.style.opacity = '0';
+        }, 1000);
+        state.currentStage = stageNum;
+        return;
+      }
+
+      state.currentStage = stageNum;
       s1.classList.add('hidden');
       s2.classList.add('hidden');
       s3.classList.add('hidden');
@@ -680,7 +742,6 @@
         s2.classList.remove('hidden');
         buildFullSwarmDigit5();
       } else if (stageNum === 3) {
-        // Step 2.3: Thắp nến rực rỡ
         s3.classList.remove('hidden');
         if (flame) {
           flame.style.opacity = '1';
@@ -688,7 +749,6 @@
         }
         if (smoke) smoke.style.opacity = '0';
       } else if (stageNum === 4) {
-        // Step 2.4: Thổi nến + Pháo hoa + Lời chúc ăn mừng
         s3.classList.remove('hidden');
         extinguishLedCake();
         triggerFireworks();
@@ -742,6 +802,53 @@
       document.getElementById('wish-counter').innerText = '0';
       const container = document.getElementById('swarm-container');
       if (container) container.innerHTML = '';
+      renderAdminWishList();
+    }
+
+    // Wish Moderation
+    function renderAdminWishList() {
+      const list = document.getElementById('admin-wish-list');
+      const total = document.getElementById('admin-wish-total');
+      if (!list) return;
+      
+      const activeWishes = state.wishes.filter(w => !w.deleted);
+      if (total) total.innerText = activeWishes.length;
+
+      if (activeWishes.length === 0) {
+        list.innerHTML = `<div class="text-center py-6 text-xs text-slate-500">No wishes received yet.</div>`;
+        return;
+      }
+
+      list.innerHTML = activeWishes.map(wish => `
+        <div class="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between text-xs">
+          <div class="flex flex-col pr-2">
+            <span class="font-bold text-white">${escapeHtml(wish.name)} <span class="text-[10px] text-slate-500 font-mono">(${wish.timeAgo || 'Now'})</span></span>
+            <span class="text-slate-300 italic text-[11px] line-clamp-1">"${escapeHtml(wish.message)}"</span>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="requestDeleteWish('${wish.id}')" class="px-2.5 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-[10px]">
+              Delete
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function requestDeleteWish(wishId) {
+      broadcastMessage('DELETE_WISH', wishId);
+    }
+
+    function deleteWishLocally(wishId) {
+      state.wishes = state.wishes.filter(w => w.id !== wishId);
+      const card = document.getElementById(`card-${wishId}`);
+      if (card) card.remove();
+      const counter = document.getElementById('wish-counter');
+      if (counter) counter.innerText = state.wishes.length;
+      renderAdminWishList();
+    }
+
+    function refreshAdminList() {
+      renderAdminWishList();
     }
 
     // Remote Commands
