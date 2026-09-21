@@ -70,7 +70,6 @@
       background: linear-gradient(180deg, #FFFFFF 0%, #E2E8F0 50%, #94A3B8 100%);
       box-shadow: inset 0 2px 4px rgba(255,255,255,0.9), 0 4px 15px rgba(0,0,0,0.6);
     }
-    /* Wish tile creating digit 5 */
     .swarm-wish-tile {
       transition: all 1.2s cubic-bezier(0.2, 0.9, 0.3, 1);
     }
@@ -409,7 +408,50 @@
       qrInstance: null
     };
 
-    // 1. LOCALSTORAGE RESILIENCE ENGINE (Chống mất dữ liệu khi F5)
+    // 1. CLOUDFLARE D1 BACKEND SYNC (ĐỒNG BỘ BACKEND & CHỐNG MẤT DATA F5)
+    async function fetchWishesFromBackend() {
+      try {
+        const res = await fetch('/api/wishes');
+        if (!res.ok) return;
+        const json = await res.json();
+        
+        if (json.status === 'success' && Array.isArray(json.data)) {
+          state.wishes = json.data;
+          state.wishes.forEach(w => state.processedWishIds.add(w.id));
+
+          // Cập nhật bộ đếm
+          const counter = document.getElementById('wish-counter');
+          if (counter) counter.innerText = state.wishes.length;
+
+          // Render lên màn hình LED (lấy 60 lời chúc mới nhất để tối ưu RAM)
+          const wall = document.getElementById('led-stage-1');
+          if (wall) {
+            wall.innerHTML = '';
+            state.wishes.slice(-60).forEach(w => {
+              const cardWrapper = document.createElement('div');
+              cardWrapper.innerHTML = createWishCardHtml(w);
+              wall.prepend(cardWrapper.firstElementChild);
+            });
+          }
+
+          renderAdminWishList();
+          if (state.currentStage === 2) buildWishesDigit5();
+          saveWishesToStorage();
+        }
+      } catch (err) {
+        console.warn('Backend sync note (running offline fallback):', err);
+      }
+    }
+
+    function syncWishToBackend(payload) {
+      fetch('/api/wishes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(err => console.warn('Could not post to D1 API:', err));
+    }
+
+    // 2. LOCALSTORAGE RESILIENCE FALLBACK
     function saveWishesToStorage() {
       try {
         localStorage.setItem('ather_wishes_backup_2026', JSON.stringify(state.wishes));
@@ -433,11 +475,10 @@
             const counter = document.getElementById('wish-counter');
             if (counter) counter.innerText = state.wishes.length;
 
-            // Render lại vào màn LED
             const wall = document.getElementById('led-stage-1');
             if (wall) {
               wall.innerHTML = '';
-              state.wishes.forEach(w => {
+              state.wishes.slice(-60).forEach(w => {
                 const cardWrapper = document.createElement('div');
                 cardWrapper.innerHTML = createWishCardHtml(w);
                 wall.prepend(cardWrapper.firstElementChild);
@@ -449,9 +490,7 @@
 
         if (rawStage) {
           const targetStage = parseInt(rawStage, 10);
-          if (!isNaN(targetStage)) {
-            setStage(targetStage);
-          }
+          if (!isNaN(targetStage)) setStage(targetStage);
         }
       } catch (e) {
         console.warn('LocalStorage restore error', e);
@@ -482,8 +521,9 @@
     window.addEventListener('hashchange', checkRouting);
     window.addEventListener('load', () => {
       checkRouting();
-      restoreSavedData(); // Nạp lại dữ liệu đã lưu ngay khi mở trang
-      initRealtimeSync();
+      restoreSavedData();          // Khôi phục bộ nhớ cục bộ
+      fetchWishesFromBackend();    // Kéo dữ liệu từ Cloudflare D1
+      initRealtimeSync();          // Kết nối kênh Realtime
     });
 
     // Dynamic QR Code Generation in Control Panel
@@ -578,7 +618,10 @@
         deleted: false
       };
 
+      // 1. Bắn qua kênh Realtime cho LED
       broadcastMessage('NEW_WISH', payload);
+      // 2. Ghi ngầm vào Cloudflare D1
+      syncWishToBackend(payload);
 
       document.getElementById('wish-form').classList.add('hidden');
       document.getElementById('guest-success').classList.remove('hidden');
@@ -686,7 +729,6 @@
       state.processedWishIds.add(wish.id);
       state.wishes.push(wish);
 
-      // Lưu ngay vào LocalStorage
       saveWishesToStorage();
 
       const counter = document.getElementById('wish-counter');
@@ -697,6 +739,11 @@
         const cardWrapper = document.createElement('div');
         cardWrapper.innerHTML = createWishCardHtml(wish);
         wall.prepend(cardWrapper.firstElementChild);
+
+        // Tối ưu DOM: Giữ tối đa 60 thẻ hiển thị cùng lúc để màn LED không bị lag
+        while (wall.children.length > 60) {
+          wall.removeChild(wall.lastElementChild);
+        }
       }
 
       if (state.currentStage === 2) {
@@ -706,21 +753,15 @@
       renderAdminWishList();
     }
 
-    // 24 TỌA ĐỘ CHUẨN CỦA DÁNG SỐ 5
+    // 24 TỌA ĐỘ CHUẨN DÁNG SỐ 5
     const digit5PathPoints = [
-      // Thanh ngang đỉnh
       {x: 0.20, y: 0.16}, {x: 0.30, y: 0.16}, {x: 0.40, y: 0.16}, {x: 0.50, y: 0.16}, {x: 0.60, y: 0.16}, {x: 0.70, y: 0.16}, {x: 0.80, y: 0.16},
-      // Cạnh dọc trên
       {x: 0.20, y: 0.26}, {x: 0.20, y: 0.36}, {x: 0.20, y: 0.46},
-      // Thanh ngang giữa
       {x: 0.30, y: 0.46}, {x: 0.40, y: 0.46}, {x: 0.50, y: 0.46}, {x: 0.60, y: 0.46}, {x: 0.70, y: 0.46},
-      // Vòng cung bụng bên phải
       {x: 0.78, y: 0.54}, {x: 0.82, y: 0.64}, {x: 0.78, y: 0.74},
-      // Đáy bụng vòng lại trái
       {x: 0.70, y: 0.82}, {x: 0.60, y: 0.86}, {x: 0.50, y: 0.86}, {x: 0.40, y: 0.86}, {x: 0.30, y: 0.82}, {x: 0.22, y: 0.74}
     ];
 
-    // 2. TẠO SỐ 5 BẰNG CHÍNH CÁC THẺ LỜI CHÚC (Wish Capsules)
     function buildWishesDigit5() {
       const container = document.getElementById('swarm-container');
       if (!container) return;
@@ -737,7 +778,6 @@
         const posX = centerX - (scaleX / 2) + point.x * scaleX;
         const posY = centerY - (scaleY / 2) + point.y * scaleY;
 
-        // Lấy lời chúc thật nếu có, ngược lại điền thẻ danh dự Ather Labs
         const wish = state.wishes[idx % (state.wishes.length || 1)];
 
         const tile = document.createElement('div');
@@ -760,7 +800,6 @@
           `;
         }
 
-        // Tọa độ ngẫu nhiên ban đầu để tạo hiệu ứng bay vào
         const randX = (Math.random() - 0.5) * rect.width * 1.4 + centerX;
         const randY = (Math.random() - 0.5) * rect.height * 1.4 + centerY;
         tile.style.left = `${randX}px`;
@@ -789,11 +828,8 @@
       const smoke = document.getElementById('cake-smoke-led');
       const banner = document.getElementById('stage-4-celebration-banner');
 
-      // Morphing 2.2 -> 2.3
       if (state.currentStage === 2 && stageNum === 3) {
-        if (container) {
-          container.classList.add('morph-to-candle');
-        }
+        if (container) container.classList.add('morph-to-candle');
         setTimeout(() => {
           s2.classList.add('hidden');
           s3.classList.remove('hidden');
