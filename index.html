@@ -90,6 +90,7 @@
   <!-- ==================== GUEST INTERFACE ==================== -->
   <main id="guest-view" class="w-full max-w-md mx-auto my-auto flex flex-col items-center py-4">
     
+    <!-- Header -->
     <header class="flex items-center gap-3 mb-6">
       <img src="https://a5.atherlabs.com/images/a5-logo-03d92851fcd8.webp" alt="Ather Labs 5th Birthday" class="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(213,255,0,0.5)]">
       <div class="flex flex-col">
@@ -312,7 +313,7 @@
       <div class="flex flex-col gap-3 pt-4 border-t border-brand-border/70">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold tracking-wider text-slate-300 uppercase">Live Wishes Moderation (<span id="admin-wish-total" class="text-brand-volt">0</span>)</span>
-          <button onclick="refreshAdminList()" class="text-[11px] text-brand-volt hover:underline">Refresh List</button>
+          <button id="admin-refresh-btn" onclick="refreshAdminList(event)" class="text-[11px] text-brand-volt hover:underline transition-all">Refresh List</button>
         </div>
 
         <div id="admin-wish-list" class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
@@ -404,42 +405,56 @@
       currentStage: 1,
       mqttClient: null,
       channel: 'atherlabs_5th_bday_prod_2026',
-      qrInstance: null
+      qrInstance: null,
+      isFetching: false
     };
 
-    // 1. CLOUDFLARE D1 BACKEND SYNC (ĐỒNG BỘ BACKEND & CHỐNG MẤT DATA F5)
+    // 1. CLOUDFLARE D1 BACKEND SYNC (TỰ ĐỘNG PHÁT HIỆN DỮ LIỆU MỚI TỪ STRESS TEST & F5)
     async function fetchWishesFromBackend() {
+      if (state.isFetching) return;
+      state.isFetching = true;
       try {
         const res = await fetch('/api/wishes');
-        if (!res.ok) return;
+        if (!res.ok) throw new Error('API response not ok');
         const json = await res.json();
         
         if (json.status === 'success' && Array.isArray(json.data)) {
-          state.wishes = json.data;
-          state.wishes.forEach(w => state.processedWishIds.add(w.id));
+          // Lọc ra các lời chúc mới mà màn hình chưa nhận được
+          const newItems = json.data.filter(w => !state.processedWishIds.has(w.id));
+          
+          if (newItems.length > 0) {
+            newItems.forEach((wish) => {
+              state.processedWishIds.add(wish.id);
+              wish.displayIndex = state.wishes.length + 1;
+              state.wishes.push(wish);
 
-          // Cập nhật bộ đếm
-          const counter = document.getElementById('wish-counter');
-          if (counter) counter.innerText = state.wishes.length;
+              // Đẩy lần lượt từng thẻ vào màn LED với animation
+              const wall = document.getElementById('led-stage-1');
+              if (wall) {
+                const cardWrapper = document.createElement('div');
+                cardWrapper.innerHTML = createWishCardHtml(wish);
+                wall.prepend(cardWrapper.firstElementChild);
 
-          // Render lên màn hình LED (lấy 60 lời chúc mới nhất)
-          const wall = document.getElementById('led-stage-1');
-          if (wall) {
-            wall.innerHTML = '';
-            state.wishes.slice(-60).forEach((w, idx) => {
-              w.displayIndex = w.index || (idx + 1);
-              const cardWrapper = document.createElement('div');
-              cardWrapper.innerHTML = createWishCardHtml(w);
-              wall.prepend(cardWrapper.firstElementChild);
+                // Giữ tối đa 60 thẻ để tránh tràn RAM
+                while (wall.children.length > 60) {
+                  wall.removeChild(wall.lastElementChild);
+                }
+              }
             });
-          }
 
-          renderAdminWishList();
-          if (state.currentStage === 2) buildWishesDigit5();
-          saveWishesToStorage();
+            // Cập nhật bộ đếm
+            const counter = document.getElementById('wish-counter');
+            if (counter) counter.innerText = state.wishes.length;
+
+            if (state.currentStage === 2) buildWishesDigit5();
+            saveWishesToStorage();
+            renderAdminWishList();
+          }
         }
       } catch (err) {
-        console.warn('Backend sync note:', err);
+        // Tắt thông báo console lỗi mạng để tránh spam
+      } finally {
+        state.isFetching = false;
       }
     }
 
@@ -525,6 +540,11 @@
       restoreSavedData();
       fetchWishesFromBackend();
       initRealtimeSync();
+
+      // AUTO-POLLING MỖI 1.5S: Giúp LED và Control tự động nảy số khi chạy stress test k6
+      setInterval(() => {
+        fetchWishesFromBackend();
+      }, 1500);
     });
 
     // Dynamic QR Code Generation in Control Panel
@@ -637,7 +657,7 @@
       }
     }
 
-    // Real-time Sync
+    // Real-time Sync (MQTT + BroadcastChannel)
     const localBus = new BroadcastChannel('ather_bday_bus');
     localBus.onmessage = (e) => handleIncomingMessage(e.data);
 
@@ -664,7 +684,7 @@
             if (badge) badge.innerHTML = '● REALTIME CONNECTED';
           },
           onFailure: () => {
-            console.warn('Realtime fallback to BroadcastChannel');
+            console.warn('Realtime fallback to Auto-Polling');
           }
         });
       } catch (err) {
@@ -730,7 +750,7 @@
       if (state.processedWishIds.has(wish.id)) return;
       state.processedWishIds.add(wish.id);
 
-      // Đảm bảo số thứ tự tự động tính tăng dần theo danh sách thực tế
+      // Đảm bảo số thứ tự luôn tăng dần theo danh sách thực tế
       wish.displayIndex = state.wishes.length + 1;
       state.wishes.push(wish);
 
@@ -971,8 +991,24 @@
       renderAdminWishList();
     }
 
-    function refreshAdminList() {
+    // FIX HOÀN TOÀN NÚT REFRESH TRONG ADMIN PANEL
+    async function refreshAdminList(e) {
+      const btn = e ? e.target : document.getElementById('admin-refresh-btn');
+      if (btn) {
+        btn.innerText = 'Syncing...';
+        btn.classList.add('opacity-50');
+      }
+
+      await fetchWishesFromBackend();
       renderAdminWishList();
+
+      if (btn) {
+        btn.innerText = 'Refreshed ✓';
+        btn.classList.remove('opacity-50');
+        setTimeout(() => {
+          btn.innerText = 'Refresh List';
+        }, 1200);
+      }
     }
 
     // Remote Commands
