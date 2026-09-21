@@ -416,13 +416,13 @@
       isFetching: false
     };
 
-    // 1. CLOUDFLARE D1 BACKEND SYNC (TỰ ĐỘNG PHÁT HIỆN DỮ LIỆU MỚI TỪ STRESS TEST & F5)
+    // 1. CLOUDFLARE D1 BACKEND SYNC (Đọc an toàn khi mở trang, không loop tốn quota)
     async function fetchWishesFromBackend() {
       if (state.isFetching) return;
       state.isFetching = true;
       try {
         const res = await fetch('/api/wishes');
-        if (!res.ok) throw new Error('API response not ok');
+        if (!res.ok) throw new Error('API limit or error');
         const json = await res.json();
         
         if (json.status === 'success' && Array.isArray(json.data)) {
@@ -431,7 +431,7 @@
           if (newItems.length > 0) {
             newItems.forEach((wish) => {
               state.processedWishIds.add(wish.id);
-              wish.displayIndex = state.wishes.length + 1;
+              wish.displayIndex = wish.index || (state.wishes.length + 1);
               state.wishes.push(wish);
 
               const wall = document.getElementById('led-stage-1');
@@ -543,11 +543,6 @@
       restoreSavedData();
       fetchWishesFromBackend();
       initRealtimeSync();
-
-      // AUTO-POLLING MỖI 1.5S: Giúp LED và Control tự động nhận dữ liệu stress test k6
-      setInterval(() => {
-        fetchWishesFromBackend();
-      }, 1500);
     });
 
     // Dynamic QR Code Generation in Control Panel
@@ -631,7 +626,7 @@
       const name = document.getElementById('guest-name').value.trim();
       const message = document.getElementById('guest-message').value.trim();
 
-      const uniqueId = 'wish_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+      const uniqueId = 'wish_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
 
       const payload = {
         id: uniqueId,
@@ -664,7 +659,8 @@
 
     function initRealtimeSync() {
       try {
-        const clientId = 'ather_' + Math.random().toString(16).substring(2, 8);
+        // Đảm bảo Client ID duy nhất tuyệt đối để không bị đè kết nối giữa các máy Control
+        const clientId = 'ather_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
         state.mqttClient = new Paho.MQTT.Client('broker.emqx.io', 8084, clientId);
         
         state.mqttClient.onMessageArrived = (message) => {
@@ -676,16 +672,30 @@
           }
         };
 
+        state.mqttClient.onConnectionLost = (responseObject) => {
+          if (responseObject.errorCode !== 0) {
+            console.warn('Realtime lost, reconnecting...', responseObject.errorMessage);
+            setTimeout(initRealtimeSync, 3000);
+          }
+        };
+
         state.mqttClient.connect({
           useSSL: true,
           timeout: 5,
+          keepAliveInterval: 30,
+          cleanSession: true,
           onSuccess: () => {
             state.mqttClient.subscribe(state.channel);
             const badge = document.getElementById('mqtt-status-badge');
             if (badge) badge.innerHTML = '● REALTIME CONNECTED';
+
+            // Yêu cầu đồng bộ dữ liệu từ các máy đang mở khác
+            if (window.location.hash === '#control') {
+              broadcastMessage('REQUEST_SYNC_DATA', {});
+            }
           },
           onFailure: () => {
-            console.warn('Realtime fallback to Auto-Polling');
+            console.warn('MQTT connect failed, using BroadcastChannel fallback');
           }
         });
       } catch (err) {
@@ -710,6 +720,22 @@
         setStage(data.payload);
       } else if (data.type === 'DELETE_WISH') {
         deleteWishLocally(data.payload);
+      } else if (data.type === 'REQUEST_SYNC_DATA') {
+        // Thiết bị có dữ liệu sẽ gửi lại cho máy Control vừa mới mở
+        if (state.wishes.length > 0) {
+          broadcastMessage('RESPONSE_SYNC_DATA', state.wishes);
+        }
+      } else if (data.type === 'RESPONSE_SYNC_DATA') {
+        if (Array.isArray(data.payload) && data.payload.length > state.wishes.length) {
+          data.payload.forEach(w => {
+            if (!state.processedWishIds.has(w.id)) {
+              state.processedWishIds.add(w.id);
+              state.wishes.push(w);
+            }
+          });
+          renderAdminWishList();
+          saveWishesToStorage();
+        }
       } else if (data.type === 'ACTION') {
         if (data.payload === 'fireworks') triggerFireworks();
         if (data.payload === 'extinguish_led_cake') extinguishLedCake();
@@ -756,6 +782,7 @@
 
       saveWishesToStorage();
 
+      // Đồng bộ màn hình LED
       const counter = document.getElementById('wish-counter');
       if (counter) counter.innerText = state.wishes.length;
 
@@ -774,6 +801,7 @@
         buildWishesDigit5();
       }
 
+      // Đồng bộ ngay trên toàn bộ các máy Control đang mở
       renderAdminWishList();
     }
 
@@ -998,7 +1026,9 @@
         btn.classList.add('opacity-50');
       }
 
+      // Kéo từ backend nếu còn quota, đồng thời phát lệnh xin sync qua MQTT
       await fetchWishesFromBackend();
+      broadcastMessage('REQUEST_SYNC_DATA', {});
       renderAdminWishList();
 
       if (btn) {
