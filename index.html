@@ -9,10 +9,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
-  <!-- MQTT Paho Client for Cross-Device Sync -->
+  <!-- MQTT Paho Client for Real-time Cross-device Sync -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
   
-  <!-- Stylesheet -->
+  <!-- Local Stylesheet -->
   <link rel="stylesheet" href="stylesheet.css">
 
   <script>
@@ -41,34 +41,49 @@
       overflow-x: hidden;
       touch-action: manipulation;
     }
-    .neon-text-volt {
-      color: #D5FF00;
-      text-shadow: 0 0 10px rgba(213, 255, 0, 0.4), 0 0 20px rgba(213, 255, 0, 0.2);
-    }
-    .neon-border-volt {
-      box-shadow: 0 0 15px rgba(213, 255, 0, 0.25), inset 0 0 15px rgba(213, 255, 0, 0.1);
-    }
     .contour-bg {
       background-image: radial-gradient(circle at center, rgba(213, 255, 0, 0.05) 0%, transparent 70%),
-                        repeating-radial-gradient(circle at center, rgba(255, 255, 255, 0.015) 0, rgba(255, 255, 255, 0.015) 1px, transparent 1px, transparent 24px);
+                        repeating-radial-gradient(circle at center, rgba(255, 255, 255, 0.012) 0, rgba(255, 255, 255, 0.012) 1px, transparent 1px, transparent 24px);
     }
-    .glow-candle {
-      animation: flicker 1.2s infinite alternate ease-in-out;
+    /* Flame Animation */
+    .glow-candle-capsule {
+      animation: flameFlicker 1.4s infinite alternate ease-in-out;
     }
-    @keyframes flicker {
-      0% { filter: drop-shadow(0 0 12px #D5FF00) drop-shadow(0 0 24px #D5FF00); transform: scale(1); }
-      100% { filter: drop-shadow(0 0 20px #E5FF4D) drop-shadow(0 0 36px #D5FF00); transform: scale(1.06); }
+    @keyframes flameFlicker {
+      0% {
+        box-shadow: 0 0 16px rgba(213, 255, 0, 0.85), 0 0 32px rgba(213, 255, 0, 0.5);
+        transform: scale(1);
+      }
+      100% {
+        box-shadow: 0 0 28px rgba(229, 255, 77, 1), 0 0 45px rgba(213, 255, 0, 0.7);
+        transform: scale(1.05) translateY(-2px);
+      }
     }
-    .swarm-card {
-      transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Swarm Matrix Flight Animation */
+    .swarm-tile {
+      transition: all 1.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+    .cake-layer-top {
+      background: linear-gradient(180deg, #151921 0%, #0E1219 100%);
+      border: 2px solid #D5FF00;
+      box-shadow: 0 0 20px rgba(213, 255, 0, 0.25);
+    }
+    .cake-layer-bottom {
+      background: linear-gradient(180deg, #161A22 0%, #0C0F14 100%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    }
+    .candle-pillar {
+      background: linear-gradient(180deg, #FFFFFF 0%, #C3CBD5 50%, #64748B 100%);
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 4px 12px rgba(0,0,0,0.6);
     }
   </style>
 </head>
 
-<body class="min-h-screen contour-bg flex flex-col items-center justify-between p-4 selection:bg-brand-volt selection:text-black">
+<body class="min-h-screen contour-bg flex flex-col items-center justify-between p-3 md:p-6 selection:bg-brand-volt selection:text-black">
 
   <!-- ==================== GUEST INTERFACE ==================== -->
-  <main id="guest-view" class="w-full max-w-md mx-auto my-auto flex flex-col items-center py-6">
+  <main id="guest-view" class="w-full max-w-md mx-auto my-auto flex flex-col items-center py-4">
     
     <!-- Brand Header -->
     <header class="flex items-center gap-3 mb-6">
@@ -80,7 +95,7 @@
     </header>
 
     <!-- STEP 1.1: OPEN CARD -->
-    <section id="guest-step-1" class="w-full bg-brand-card/90 border border-brand-border rounded-2xl p-6 backdrop-blur-xl shadow-2xl flex flex-col items-center text-center">
+    <section id="guest-step-1" class="w-full bg-brand-card/95 border border-brand-border rounded-2xl p-6 backdrop-blur-xl shadow-2xl flex flex-col items-center text-center">
       <div class="flex items-center justify-between w-full mb-4">
         <span class="px-2.5 py-0.5 rounded-full bg-brand-volt/10 text-brand-volt text-[11px] font-bold tracking-wider border border-brand-volt/30">STEP 1.1</span>
         <div class="flex gap-1.5">
@@ -91,7 +106,7 @@
       </div>
 
       <!-- Card Graphic -->
-      <div id="interactive-card" onclick="nextGuestStep(2)" class="cursor-pointer group relative w-56 h-72 rounded-2xl bg-black/60 border border-white/10 p-5 flex flex-col items-center justify-between overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-105 active:scale-95">
+      <div onclick="nextGuestStep(2)" class="cursor-pointer group relative w-56 h-72 rounded-2xl bg-black/60 border border-white/10 p-5 flex flex-col items-center justify-between overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-105 active:scale-95">
         <div class="absolute inset-0 bg-gradient-to-b from-brand-volt/10 to-transparent pointer-events-none"></div>
         <div class="w-full flex justify-end">
           <span class="text-[9px] uppercase tracking-widest text-brand-volt/80 font-mono">INVITATION</span>
@@ -117,8 +132,8 @@
       </button>
     </section>
 
-    <!-- STEP 1.2: BLOW THE CANDLE -->
-    <section id="guest-step-2" class="w-full bg-brand-card/90 border border-brand-border rounded-2xl p-6 backdrop-blur-xl shadow-2xl flex flex-col items-center text-center hidden">
+    <!-- STEP 1.2: BLOW CAKE (MATCHING IMAGE 1 EXACTLY) -->
+    <section id="guest-step-2" class="w-full bg-brand-card/95 border border-brand-border rounded-2xl p-6 backdrop-blur-xl shadow-2xl flex flex-col items-center text-center hidden">
       <div class="flex items-center justify-between w-full mb-4">
         <span class="px-2.5 py-0.5 rounded-full bg-brand-volt/10 text-brand-volt text-[11px] font-bold tracking-wider border border-brand-volt/30">STEP 1.2</span>
         <div class="flex gap-1.5">
@@ -128,28 +143,43 @@
         </div>
       </div>
 
-      <h2 class="text-xl font-bold text-white mb-2">Blow Out Candle #5</h2>
-      <p class="text-xs text-slate-400 mb-8">Tap the flame or blow into your microphone to make a wish for Ather Labs!</p>
+      <h2 class="text-xl font-bold text-white mb-1">Make A 5th Birthday Wish</h2>
+      <p class="text-xs text-slate-400 mb-6">Tap the flame to extinguish the candle & make your wish!</p>
 
-      <!-- Candle 5 Container -->
-      <div id="candle-box" onclick="blowCandle()" class="cursor-pointer relative flex flex-col items-center justify-center my-6 group">
-        <!-- Neon Flame -->
-        <div id="candle-flame" class="glow-candle w-7 h-10 rounded-full bg-gradient-to-t from-brand-volt via-white to-transparent mb-1 transition-all duration-700"></div>
-        <div id="smoke-effect" class="w-2 h-10 rounded-full bg-white/30 blur-sm -mt-8 opacity-0 transition-opacity duration-1000 pointer-events-none"></div>
+      <!-- Custom Cyber Birthday Cake (Image 1 replica) -->
+      <div onclick="blowCakeGuest()" class="cursor-pointer relative flex flex-col items-center my-4 select-none group">
+        
+        <!-- Flame Capsule with Glow -->
+        <div id="cake-flame-guest" class="glow-candle-capsule w-6 h-10 rounded-full bg-gradient-to-t from-brand-volt via-[#F9FFE0] to-white mb-1 transition-all duration-500"></div>
+        <div id="cake-smoke-guest" class="w-2 h-8 rounded-full bg-white/40 blur-xs -mt-8 opacity-0 transition-opacity duration-1000 pointer-events-none"></div>
 
-        <!-- 3D Digit 5 Base -->
-        <div class="text-8xl font-black text-brand-volt tracking-tight drop-shadow-[0_10px_20px_rgba(0,0,0,0.9)]">
-          5
+        <!-- Pillar Candle '5' -->
+        <div class="candle-pillar w-12 h-14 rounded-t-xl flex items-center justify-center -mb-0.5 z-10">
+          <span class="text-lg font-black text-slate-900 tracking-tight">5</span>
+        </div>
+
+        <!-- Cake Tier 1 (Top) -->
+        <div class="cake-layer-top w-56 h-14 rounded-2xl flex items-center justify-center -mb-2 z-20 px-3">
+          <span class="text-xs font-black tracking-widest text-brand-volt uppercase drop-shadow-[0_0_8px_rgba(213,255,0,0.5)]">
+            ATHER LABS · 5TH
+          </span>
+        </div>
+
+        <!-- Cake Tier 2 (Bottom Base) -->
+        <div class="cake-layer-bottom w-64 h-16 rounded-2xl flex items-center justify-center z-10 px-4">
+          <span class="text-xs font-black tracking-widest text-white uppercase">
+            AMBITION, AMPLIFIED
+          </span>
         </div>
       </div>
 
-      <button id="blow-btn" onclick="blowCandle()" class="w-full py-3.5 px-6 mt-6 rounded-xl bg-brand-volt text-black font-bold text-sm tracking-wide hover:bg-brand-voltGlow transition-all shadow-[0_0_20px_rgba(213,255,0,0.3)]">
-        💨 Tap to Blow Out Flame
+      <button id="blow-cake-btn" onclick="blowCakeGuest()" class="w-full py-3.5 px-6 mt-6 rounded-xl bg-brand-volt text-black font-bold text-sm tracking-wide hover:bg-brand-voltGlow transition-all shadow-[0_0_20px_rgba(213,255,0,0.3)]">
+        💨 Tap to Extinguish Flame
       </button>
     </section>
 
-    <!-- STEP 1.3: SEND WISH -->
-    <section id="guest-step-3" class="w-full bg-brand-card/90 border border-brand-border rounded-2xl p-6 backdrop-blur-xl shadow-2xl flex flex-col items-center hidden">
+    <!-- STEP 1.3: BROADCAST WISH -->
+    <section id="guest-step-3" class="w-full bg-brand-card/95 border border-brand-border rounded-2xl p-6 backdrop-blur-xl shadow-2xl flex flex-col items-center hidden">
       <div class="flex items-center justify-between w-full mb-4">
         <span class="px-2.5 py-0.5 rounded-full bg-brand-volt/10 text-brand-volt text-[11px] font-bold tracking-wider border border-brand-volt/30">STEP 1.3</span>
         <div class="flex gap-1.5">
@@ -160,39 +190,39 @@
       </div>
 
       <h2 class="text-xl font-bold text-white mb-1 text-center">Broadcast Your Wish</h2>
-      <p class="text-xs text-slate-400 mb-5 text-center">Your greeting will fly onto the main stage LED screen in real-time.</p>
+      <p class="text-xs text-slate-400 mb-5 text-center">Your compact greeting will instantly assemble into the stage LED matrix.</p>
 
-      <form id="wish-form" onsubmit="submitWish(event)" class="w-full flex flex-col gap-4">
+      <form id="wish-form" onsubmit="submitGuestWish(event)" class="w-full flex flex-col gap-3.5">
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Your Full Name</label>
-          <input id="guest-name" type="text" required placeholder="e.g. Alex Nguyen" class="w-full px-4 py-3 rounded-xl bg-black/60 border border-brand-border text-white text-sm focus:border-brand-volt focus:outline-none focus:ring-1 focus:ring-brand-volt transition-all">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">Full Name & Team</label>
+          <input id="guest-name" type="text" required placeholder="e.g. Alex Nguyễn (AI Team)" class="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-brand-border text-white text-xs focus:border-brand-volt focus:outline-none focus:ring-1 focus:ring-brand-volt transition-all">
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Your Message</label>
-          <textarea id="guest-message" rows="3" required placeholder="Send your warmest greetings to Ather Labs for its 5th milestone..." class="w-full px-4 py-3 rounded-xl bg-black/60 border border-brand-border text-white text-sm focus:border-brand-volt focus:outline-none focus:ring-1 focus:ring-brand-volt transition-all resize-none"></textarea>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">Your Message (Short & Crisp)</label>
+          <textarea id="guest-message" rows="2" required placeholder="e.g. Happy 5th Birthday Ather Labs! Ambition Amplified!" class="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-brand-border text-white text-xs focus:border-brand-volt focus:outline-none focus:ring-1 focus:ring-brand-volt transition-all resize-none"></textarea>
         </div>
 
-        <button type="submit" class="w-full py-3.5 px-6 rounded-xl bg-brand-volt text-black font-bold text-sm tracking-wide hover:bg-brand-voltGlow transition-all shadow-[0_0_20px_rgba(213,255,0,0.3)] mt-2">
+        <button type="submit" class="w-full py-3.5 px-6 rounded-xl bg-brand-volt text-black font-bold text-sm tracking-wide hover:bg-brand-voltGlow transition-all shadow-[0_0_20px_rgba(213,255,0,0.3)] mt-1">
           🚀 Send To Stage LED
         </button>
       </form>
 
-      <!-- Success Screen -->
+      <!-- Success Notice -->
       <div id="guest-success" class="hidden flex flex-col items-center text-center py-6">
-        <div class="w-14 h-14 rounded-full bg-brand-volt/10 border border-brand-volt flex items-center justify-center text-brand-volt text-2xl mb-4">
+        <div class="w-12 h-12 rounded-full bg-brand-volt/10 border border-brand-volt flex items-center justify-center text-brand-volt text-xl mb-3">
           ✓
         </div>
-        <h3 class="text-lg font-bold text-white mb-2">Message Broadcasted!</h3>
-        <p class="text-xs text-slate-400 mb-6">Look up at the main stage LED to watch your wish form the celebration matrix.</p>
-        <button onclick="location.reload()" class="px-5 py-2 rounded-lg bg-white/10 text-white text-xs font-semibold hover:bg-white/20 transition-all">
+        <h3 class="text-base font-bold text-white mb-1">Broadcasted Successfully!</h3>
+        <p class="text-xs text-slate-400 mb-5">Your greeting is flying live onto the giant stage screen.</p>
+        <button onclick="location.reload()" class="px-4 py-2 rounded-lg bg-white/10 text-white text-xs font-semibold hover:bg-white/20 transition-all">
           Send Another Wish
         </button>
       </div>
     </section>
   </main>
 
-  <!-- ==================== ADMIN / REMOTE CONTROL (#control) ==================== -->
+  <!-- ==================== ADMIN CONTROL PANEL (#control) ==================== -->
   <section id="control-view" class="w-full max-w-2xl mx-auto my-auto flex flex-col items-center py-6 hidden">
     <div class="w-full bg-brand-card border border-brand-border rounded-2xl p-6 backdrop-blur-xl shadow-2xl flex flex-col gap-6">
       
@@ -200,7 +230,7 @@
         <div class="flex items-center gap-3">
           <img src="https://a5.atherlabs.com/images/a5-logo-03d92851fcd8.webp" alt="Logo" class="w-8 h-8 object-contain">
           <div>
-            <h1 class="text-base font-bold text-white uppercase tracking-wider">Show Remote Controller</h1>
+            <h1 class="text-base font-bold text-white uppercase tracking-wider">Show Controller</h1>
             <span class="text-[11px] text-brand-volt font-mono">STAGE LED MASTER · REAL-TIME SYNC</span>
           </div>
         </div>
@@ -209,7 +239,7 @@
         </span>
       </div>
 
-      <!-- Dedicated Link Hub -->
+      <!-- Route Links Hub -->
       <div class="bg-black/50 border border-brand-border/60 rounded-xl p-4 flex flex-col gap-2">
         <span class="text-xs font-bold tracking-wider text-slate-400 uppercase">Dedicated Route Hub</span>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
@@ -228,13 +258,13 @@
         </div>
       </div>
 
-      <!-- Stage Switcher Controls -->
+      <!-- Stage Triggers -->
       <div class="flex flex-col gap-3">
-        <span class="text-xs font-bold tracking-wider text-slate-400 uppercase">Event Stages</span>
+        <span class="text-xs font-bold tracking-wider text-slate-400 uppercase">Stage Transitions</span>
         <div class="grid grid-cols-2 gap-3">
           <button onclick="sendRemoteStage(1)" class="p-4 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all group">
             <span class="text-xs text-slate-400 block mb-1">STAGE 2.1</span>
-            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Live Wish Wall</span>
+            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Compact Wish Wall</span>
           </button>
           
           <button onclick="sendRemoteStage(2)" class="p-4 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all group">
@@ -244,43 +274,46 @@
 
           <button onclick="sendRemoteStage(3)" class="p-4 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all group">
             <span class="text-xs text-slate-400 block mb-1">STAGE 2.3</span>
-            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Light The Candle</span>
+            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Giant Cyber Cake</span>
           </button>
 
           <button onclick="sendRemoteStage(4)" class="p-4 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all group">
             <span class="text-xs text-slate-400 block mb-1">STAGE 2.4</span>
-            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Cake & Fireworks</span>
+            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Blow Flame & Fireworks</span>
           </button>
         </div>
       </div>
 
-      <!-- Manual Trigger Actions -->
+      <!-- Action Triggers -->
       <div class="flex gap-3">
         <button onclick="sendRemoteAction('fireworks')" class="flex-1 py-3 px-4 rounded-xl bg-brand-volt text-black font-bold text-xs uppercase tracking-wider hover:bg-brand-voltGlow transition-all shadow-[0_0_15px_rgba(213,255,0,0.2)]">
           🎆 Launch Fireworks Burst
         </button>
+        <button onclick="sendRemoteAction('extinguish_led_cake')" class="py-3 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-xs uppercase tracking-wider hover:bg-white/20 transition-all">
+          Blow LED Flame
+        </button>
         <button onclick="sendRemoteAction('clear')" class="py-3 px-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-xs uppercase tracking-wider hover:bg-red-500/20 transition-all">
-          Clear Wall
+          Clear
         </button>
       </div>
     </div>
   </section>
 
   <!-- ==================== SHOW LED STAGE DISPLAY (#led) ==================== -->
-  <section id="led-view" class="fixed inset-0 w-screen h-screen bg-black overflow-hidden flex flex-col justify-between p-8 hidden">
+  <section id="led-view" class="fixed inset-0 w-screen h-screen bg-black overflow-hidden flex flex-col justify-between p-6 hidden">
     
     <!-- Stage Header -->
-    <div class="flex items-center justify-between z-20">
+    <div class="flex items-center justify-between z-30">
       <div class="flex items-center gap-4">
-        <img src="https://a5.atherlabs.com/images/a5-logo-03d92851fcd8.webp" alt="Ather Labs" class="w-16 h-16 object-contain drop-shadow-[0_0_15px_rgba(213,255,0,0.6)]">
+        <img src="https://a5.atherlabs.com/images/a5-logo-03d92851fcd8.webp" alt="Ather Labs" class="w-14 h-14 object-contain drop-shadow-[0_0_15px_rgba(213,255,0,0.6)]">
         <div>
-          <h1 class="text-2xl font-black text-white tracking-widest uppercase">Ather Labs · 5th Birthday</h1>
-          <span class="text-sm font-mono tracking-[0.4em] text-brand-volt">AMBITION, AMPLIFIED · 2026</span>
+          <h1 class="text-xl font-black text-white tracking-widest uppercase">Ather Labs · 5th Birthday</h1>
+          <span class="text-xs font-mono tracking-[0.4em] text-brand-volt">AMBITION, AMPLIFIED · 2026</span>
         </div>
       </div>
       <div class="flex items-center gap-3">
         <span class="text-xs font-mono px-3 py-1 rounded-full bg-brand-volt/10 border border-brand-volt/30 text-brand-volt">
-          STAGE DISPLAY MODE
+          STAGE DISPLAY VIEW
         </span>
         <button onclick="document.documentElement.requestFullscreen()" class="text-xs px-3 py-1 rounded-full bg-white/10 text-white hover:bg-white/20">
           Fullscreen ⛶
@@ -289,44 +322,59 @@
     </div>
 
     <!-- Central Interactive Arena -->
-    <div id="led-arena" class="relative flex-1 w-full flex items-center justify-center overflow-hidden my-4">
+    <div id="led-arena" class="relative flex-1 w-full flex items-center justify-center overflow-hidden my-3">
       
-      <!-- Stage 2.1: Live Wish Flow Wall -->
-      <div id="led-stage-1" class="absolute inset-0 grid grid-cols-3 md:grid-cols-4 gap-4 p-6 overflow-hidden">
-        <!-- Live Wish Cards Stream In Here Dynamically -->
+      <!-- Stage 2.1: Compact Horizontal Wish Grid (Image 2 style) -->
+      <div id="led-stage-1" class="absolute inset-0 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-4 overflow-y-auto content-start">
+        <!-- Live Wish Cards stream in here -->
       </div>
 
-      <!-- Stage 2.2: The Swarm Matrix Digit 5 -->
+      <!-- Stage 2.2: The Elastic Swarm Digit '5' -->
       <div id="led-stage-2" class="relative w-full h-full flex items-center justify-center hidden">
-        <!-- The Swarm Anchor Grid for Digit 5 -->
-        <div id="matrix-anchor" class="relative w-[500px] h-[650px]"></div>
+        <div id="swarm-container" class="relative w-full h-full"></div>
       </div>
 
-      <!-- Stage 2.3 & 2.4: Candle & Giant Celebration -->
+      <!-- Stage 2.3 & 2.4: Giant Cyber Birthday Cake (Image 1 style) -->
       <div id="led-stage-3" class="relative flex flex-col items-center justify-center hidden">
-        <div id="led-flame" class="glow-candle w-16 h-28 rounded-full bg-gradient-to-t from-brand-volt via-white to-transparent mb-2"></div>
-        <div class="text-[180px] font-black text-brand-volt leading-none drop-shadow-[0_0_60px_rgba(213,255,0,0.5)]">
-          5
+        <!-- Giant Flame -->
+        <div id="cake-flame-led" class="glow-candle-capsule w-16 h-28 rounded-full bg-gradient-to-t from-brand-volt via-[#F9FFE0] to-white mb-2 transition-all duration-700"></div>
+        <div id="cake-smoke-led" class="w-4 h-24 rounded-full bg-white/40 blur-md -mt-20 opacity-0 transition-opacity duration-1000 pointer-events-none"></div>
+
+        <!-- Pillar Candle '5' -->
+        <div class="candle-pillar w-28 h-36 rounded-t-3xl flex items-center justify-center -mb-1 z-10 shadow-2xl">
+          <span class="text-5xl font-black text-slate-900 tracking-tight">5</span>
         </div>
-        <span class="text-2xl font-bold tracking-[0.5em] text-white mt-4 uppercase">Happy 5th Anniversary Ather Labs</span>
+
+        <!-- Tier 1 -->
+        <div class="cake-layer-top w-[480px] h-28 rounded-3xl flex items-center justify-center -mb-3 z-20 px-6">
+          <span class="text-2xl font-black tracking-widest text-brand-volt uppercase drop-shadow-[0_0_15px_rgba(213,255,0,0.6)]">
+            ATHER LABS · 5TH
+          </span>
+        </div>
+
+        <!-- Tier 2 -->
+        <div class="cake-layer-bottom w-[580px] h-32 rounded-3xl flex items-center justify-center z-10 px-8">
+          <span class="text-2xl font-black tracking-widest text-white uppercase">
+            AMBITION, AMPLIFIED
+          </span>
+        </div>
       </div>
     </div>
 
     <!-- Stage Footer Broadcast Bar -->
-    <div class="z-20 bg-black/80 border-t border-brand-border/80 pt-4 flex justify-between items-center text-xs font-mono text-slate-400">
+    <div class="z-30 bg-black/90 border-t border-brand-border/80 pt-3 flex justify-between items-center text-xs font-mono text-slate-400">
       <div class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-brand-volt animate-ping"></span>
-        <span class="text-white">LIVE WISHES RECEIVED: <span id="wish-counter" class="text-brand-volt font-bold">0</span></span>
+        <span class="w-2 h-2 rounded-full bg-brand-volt animate-ping"></span>
+        <span class="text-white">TOTAL BROADCAST WISHES: <span id="wish-counter" class="text-brand-volt font-bold">0</span></span>
       </div>
       <div>
-        SCAN QR ON SCREEN TO PARTICIPATE
+        SCAN QR CODE ON SCREEN TO PARTICIPATE
       </div>
     </div>
   </section>
 
-  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <!-- ==================== JAVASCRIPT ENGINE ==================== -->
   <script>
-    // State Store
     const state = {
       wishes: [],
       currentStage: 1,
@@ -334,7 +382,7 @@
       channel: 'atherlabs_5th_bday_prod_2026'
     };
 
-    // Route Discovery
+    // Route Switching
     function checkRouting() {
       const hash = window.location.hash;
       const params = new URLSearchParams(window.location.search);
@@ -348,7 +396,6 @@
         document.getElementById('control-view').classList.remove('hidden');
       } else if (hash === '#led' || view === 'led') {
         document.getElementById('led-view').classList.remove('hidden');
-        renderSwarmGrid();
       } else {
         document.getElementById('guest-view').classList.remove('hidden');
       }
@@ -360,7 +407,7 @@
       initRealtimeSync();
     });
 
-    // Guest Flow Navigation
+    // Guest Flow
     function nextGuestStep(step) {
       document.getElementById('guest-step-1').classList.add('hidden');
       document.getElementById('guest-step-2').classList.add('hidden');
@@ -373,11 +420,10 @@
       }
     }
 
-    // Candle Extinguish Action
-    function blowCandle() {
-      const flame = document.getElementById('candle-flame');
-      const smoke = document.getElementById('smoke-effect');
-      const btn = document.getElementById('blow-btn');
+    function blowCakeGuest() {
+      const flame = document.getElementById('cake-flame-guest');
+      const smoke = document.getElementById('cake-smoke-guest');
+      const btn = document.getElementById('blow-cake-btn');
 
       flame.style.opacity = '0';
       flame.style.transform = 'scale(0.2)';
@@ -388,7 +434,7 @@
           particleCount: 80,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ['#D5FF00', '#FFFFFF', '#A3E635']
+          colors: ['#D5FF00', '#FFFFFF', '#E5FF4D']
         });
       }
 
@@ -398,20 +444,19 @@
       }, 1200);
     }
 
-    // Form Submission
-    function submitWish(e) {
+    function submitGuestWish(e) {
       e.preventDefault();
       const name = document.getElementById('guest-name').value.trim();
       const message = document.getElementById('guest-message').value.trim();
 
       const payload = {
         id: Date.now(),
+        index: state.wishes.length + 1,
         name: name,
         message: message,
-        timestamp: new Date().toLocaleTimeString()
+        timeAgo: 'Just now'
       };
 
-      // Broadcast to Stage LED
       broadcastMessage('NEW_WISH', payload);
 
       document.getElementById('wish-form').classList.add('hidden');
@@ -427,12 +472,11 @@
       }
     }
 
-    // Realtime Sync Engine (MQTT Over Secure WebSocket + Local Broadcast Fallback)
+    // Real-time Sync (MQTT Over WSS + Local BroadcastChannel Fallback)
     const localBus = new BroadcastChannel('ather_bday_bus');
     localBus.onmessage = (e) => handleIncomingMessage(e.data);
 
     function initRealtimeSync() {
-      // Connect to Public EMQX Broker over WSS for cross-device support
       try {
         const clientId = 'ather_' + Math.random().toString(16).substring(2, 8);
         state.mqttClient = new Paho.MQTT.Client('broker.emqx.io', 8084, clientId);
@@ -442,7 +486,7 @@
             const data = JSON.parse(message.payloadString);
             handleIncomingMessage(data);
           } catch (err) {
-            console.error('Payload parse error', err);
+            console.error('Payload error', err);
           }
         };
 
@@ -455,19 +499,17 @@
             if (badge) badge.innerHTML = '● REALTIME CONNECTED';
           },
           onFailure: () => {
-            console.warn('Fallback to Local BroadcastChannel mode');
+            console.warn('Realtime fallback to BroadcastChannel mode');
           }
         });
       } catch (err) {
-        console.warn('Realtime client init failed, local sync active', err);
+        console.warn('Realtime init error', err);
       }
     }
 
     function broadcastMessage(type, payload) {
       const msg = { type, payload };
-      // 1. Send Local
       localBus.postMessage(msg);
-      // 2. Send Cloud MQTT
       if (state.mqttClient && state.mqttClient.isConnected()) {
         const mqttMsg = new Paho.MQTT.Message(JSON.stringify(msg));
         mqttMsg.destinationName = state.channel;
@@ -482,86 +524,126 @@
         setStage(data.payload);
       } else if (data.type === 'ACTION') {
         if (data.payload === 'fireworks') triggerFireworks();
+        if (data.payload === 'extinguish_led_cake') extinguishLedCake();
         if (data.payload === 'clear') clearStage();
       }
     }
 
-    // Stage LED Display Handler
+    // Generate Compact Wish Card (Image 2 style)
+    function createWishCardHtml(wish) {
+      return `
+        <div class="w-full bg-[#080B0F]/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between backdrop-blur-md shadow-lg transition-all hover:border-brand-volt/40">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <span class="w-6 h-6 rounded-lg bg-brand-volt text-black text-xs font-black flex items-center justify-center shrink-0">
+                ${wish.index || 1}
+              </span>
+              <span class="text-xs font-bold text-white truncate max-w-[150px]">
+                ${escapeHtml(wish.name)}
+              </span>
+            </div>
+            <span class="text-[10px] text-slate-400 font-mono shrink-0">${wish.timeAgo || '1m ago'}</span>
+          </div>
+
+          <p class="text-xs italic text-slate-200 line-clamp-2 leading-snug mb-2">
+            "${escapeHtml(wish.message)}"
+          </p>
+
+          <div class="flex items-center justify-between pt-1.5 border-t border-white/5 text-[10px]">
+            <span class="text-brand-volt font-bold">#AtherLabs5th</span>
+            <span class="text-emerald-400 flex items-center gap-1 font-mono">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Live
+            </span>
+          </div>
+        </div>
+      `;
+    }
+
     function onReceiveWish(wish) {
       state.wishes.push(wish);
       const counter = document.getElementById('wish-counter');
       if (counter) counter.innerText = state.wishes.length;
 
-      // Append Card into Live Flow Wall (Stage 2.1)
+      // Append into Stage 2.1 Wall
       const wall = document.getElementById('led-stage-1');
       if (wall) {
-        const card = document.createElement('div');
-        card.className = 'p-4 rounded-xl bg-brand-card/90 border border-brand-border backdrop-blur-md shadow-lg flex flex-col justify-between animate-fade-in';
-        card.innerHTML = `
-          <p class="text-sm font-medium text-white mb-2 line-clamp-3">"${escapeHtml(wish.message)}"</p>
-          <div class="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
-            <span class="font-bold text-brand-volt">${escapeHtml(wish.name)}</span>
-            <span class="text-slate-500 text-[10px]">${wish.timestamp}</span>
-          </div>
-        `;
-        wall.prepend(card);
-        if (wall.children.length > 16) {
-          wall.removeChild(wall.lastChild);
-        }
+        const cardWrapper = document.createElement('div');
+        cardWrapper.innerHTML = createWishCardHtml(wish);
+        wall.prepend(cardWrapper.firstElementChild);
       }
 
-      // If in Stage 2.2, dynamically fill into Digit 5 Matrix
+      // If currently in Swarm Stage 2.2, re-render swarm with new count
       if (state.currentStage === 2) {
-        fillMatrixSlot(wish);
+        buildSwarmDigit5();
       }
     }
 
-    // 7x9 Digit 5 Swarm Coordinate Mapping
-    const digit5Matrix = [
-      [1,1,1,1,1,1,1],
-      [1,0,0,0,0,0,0],
-      [1,0,0,0,0,0,0],
-      [1,1,1,1,1,1,0],
-      [0,0,0,0,0,0,1],
-      [0,0,0,0,0,0,1],
-      [1,0,0,0,0,0,1],
-      [0,1,1,1,1,1,0]
+    // Digit '5' Path Normalized Coordinates (0.0 to 1.0)
+    const baseDigit5Points = [
+      // Top horizontal bar
+      {x: 0.20, y: 0.15}, {x: 0.30, y: 0.15}, {x: 0.40, y: 0.15}, {x: 0.50, y: 0.15}, {x: 0.60, y: 0.15}, {x: 0.70, y: 0.15}, {x: 0.80, y: 0.15},
+      // Left vertical stroke
+      {x: 0.20, y: 0.23}, {x: 0.20, y: 0.31}, {x: 0.20, y: 0.39},
+      // Middle bar
+      {x: 0.25, y: 0.45}, {x: 0.35, y: 0.45}, {x: 0.45, y: 0.45}, {x: 0.55, y: 0.45}, {x: 0.65, y: 0.45}, {x: 0.75, y: 0.48},
+      // Right loop
+      {x: 0.80, y: 0.56}, {x: 0.80, y: 0.65}, {x: 0.78, y: 0.74},
+      // Bottom loop back
+      {x: 0.70, y: 0.82}, {x: 0.60, y: 0.85}, {x: 0.50, y: 0.85}, {x: 0.40, y: 0.85}, {x: 0.30, y: 0.82}, {x: 0.22, y: 0.75}
     ];
 
-    let matrixSlots = [];
-    function renderSwarmGrid() {
-      const anchor = document.getElementById('matrix-anchor');
-      if (!anchor) return;
-      anchor.innerHTML = '';
-      matrixSlots = [];
+    // Build Elastic Swarm Matrix for Any Number of Wishes
+    function buildSwarmDigit5() {
+      const container = document.getElementById('swarm-container');
+      if (!container) return;
+      container.innerHTML = '';
 
-      const rows = digit5Matrix.length;
-      const cols = digit5Matrix[0].length;
-      const slotWidth = 60;
-      const slotHeight = 65;
+      const count = state.wishes.length;
+      if (count === 0) return;
 
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          if (digit5Matrix[r][c] === 1) {
-            const slot = document.createElement('div');
-            slot.className = 'absolute w-12 h-12 rounded-lg bg-brand-volt/10 border border-brand-volt/30 flex items-center justify-center text-[9px] font-mono text-brand-volt overflow-hidden swarm-card shadow-[0_0_10px_rgba(213,255,0,0.15)]';
-            slot.style.left = `${c * slotWidth + 20}px`;
-            slot.style.top = `${r * slotHeight + 20}px`;
-            slot.dataset.filled = 'false';
-            anchor.appendChild(slot);
-            matrixSlots.push(slot);
-          }
-        }
-      }
-    }
+      const rect = container.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const scaleX = Math.min(rect.width * 0.7, 600);
+      const scaleY = Math.min(rect.height * 0.75, 650);
 
-    function fillMatrixSlot(wish) {
-      const emptySlot = matrixSlots.find(slot => slot.dataset.filled === 'false');
-      if (emptySlot) {
-        emptySlot.dataset.filled = 'true';
-        emptySlot.classList.add('bg-brand-volt', 'text-black', 'font-bold', 'border-white', 'shadow-[0_0_20px_#D5FF00]');
-        emptySlot.innerHTML = `<span class="truncate px-1">${escapeHtml(wish.name)}</span>`;
-      }
+      // Render all wishes as flying particle tiles
+      state.wishes.forEach((wish, idx) => {
+        // Interpolate position along the path of '5'
+        const t = (idx / count) * (baseDigit5Points.length - 1);
+        const p1 = baseDigit5Points[Math.floor(t)];
+        const p2 = baseDigit5Points[Math.ceil(t)] || p1;
+        const subT = t - Math.floor(t);
+
+        const targetNormX = p1.x + (p2.x - p1.x) * subT;
+        const targetNormY = p1.y + (p2.y - p1.y) * subT;
+
+        const posX = centerX - (scaleX / 2) + targetNormX * scaleX;
+        const posY = centerY - (scaleY / 2) + targetNormY * scaleY;
+
+        const tile = document.createElement('div');
+        tile.className = 'swarm-tile absolute px-2 py-1 rounded-lg bg-brand-volt text-black border border-white font-bold shadow-[0_0_12px_#D5FF00] flex items-center justify-center text-[10px] truncate max-w-[120px] select-none';
+        
+        // Random initial explosion position for entry fly-in
+        const randX = Math.random() * rect.width;
+        const randY = Math.random() * rect.height;
+        tile.style.left = `${randX}px`;
+        tile.style.top = `${randY}px`;
+        tile.style.transform = `scale(0.2) rotate(${(Math.random() - 0.5) * 60}deg)`;
+        tile.style.opacity = '0';
+        tile.innerHTML = `<span>#${wish.index || idx + 1} ${escapeHtml(wish.name)}</span>`;
+        container.appendChild(tile);
+
+        // Animate fly-in to lock into digit '5'
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            tile.style.left = `${posX}px`;
+            tile.style.top = `${posY}px`;
+            tile.style.transform = 'scale(1) rotate(0deg)';
+            tile.style.opacity = '1';
+          }, 30 + idx * 15);
+        });
+      });
     }
 
     function setStage(stageNum) {
@@ -578,29 +660,43 @@
         s1.classList.remove('hidden');
       } else if (stageNum === 2) {
         s2.classList.remove('hidden');
-        // Populate existing wishes into matrix
-        state.wishes.forEach(w => fillMatrixSlot(w));
+        buildSwarmDigit5();
       } else if (stageNum === 3 || stageNum === 4) {
         s3.classList.remove('hidden');
-        if (stageNum === 4) triggerFireworks();
+        if (stageNum === 4) {
+          extinguishLedCake();
+          triggerFireworks();
+        }
+      }
+    }
+
+    function extinguishLedCake() {
+      const flame = document.getElementById('cake-flame-led');
+      const smoke = document.getElementById('cake-smoke-led');
+      if (flame) {
+        flame.style.opacity = '0';
+        flame.style.transform = 'scale(0.1)';
+      }
+      if (smoke) {
+        smoke.style.opacity = '1';
       }
     }
 
     function triggerFireworks() {
       if (typeof confetti !== 'function') return;
-      const end = Date.now() + 3 * 1000;
+      const end = Date.now() + 3.5 * 1000;
       const colors = ['#D5FF00', '#FFFFFF', '#65A30D'];
 
       (function frame() {
         confetti({
-          particleCount: 4,
+          particleCount: 5,
           angle: 60,
           spread: 55,
           origin: { x: 0 },
           colors: colors
         });
         confetti({
-          particleCount: 4,
+          particleCount: 5,
           angle: 120,
           spread: 55,
           origin: { x: 1 },
@@ -617,10 +713,11 @@
       state.wishes = [];
       document.getElementById('led-stage-1').innerHTML = '';
       document.getElementById('wish-counter').innerText = '0';
-      renderSwarmGrid();
+      const container = document.getElementById('swarm-container');
+      if (container) container.innerHTML = '';
     }
 
-    // Remote Actions
+    // Remote Commands
     function sendRemoteStage(num) {
       broadcastMessage('SET_STAGE', num);
     }
@@ -631,7 +728,7 @@
       const base = window.location.origin + window.location.pathname;
       const target = base + suffix;
       navigator.clipboard.writeText(target);
-      alert('Copied URL: ' + target);
+      alert('Copied link: ' + target);
     }
 
     function escapeHtml(str) {
