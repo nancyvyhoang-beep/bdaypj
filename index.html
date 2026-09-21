@@ -82,6 +82,13 @@
       border-radius: 12px;
       margin: 0 auto;
     }
+    sup {
+      font-size: 0.6em;
+      line-height: 0;
+      position: relative;
+      vertical-align: super;
+      top: -0.2em;
+    }
   </style>
 </head>
 
@@ -94,7 +101,7 @@
     <header class="flex items-center gap-3 mb-6">
       <img src="https://a5.atherlabs.com/images/a5-logo-03d92851fcd8.webp" alt="Ather Labs 5th Birthday" class="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(213,255,0,0.5)]">
       <div class="flex flex-col">
-        <span class="text-xs tracking-[0.25em] text-white font-bold uppercase">Ather Labs · 5th Birthday</span>
+        <span class="text-xs tracking-[0.25em] text-white font-bold uppercase">Ather Labs · 5<sup>th</sup> Birthday</span>
         <span class="text-[10px] tracking-[0.3em] text-brand-volt font-medium">AMBITION, AMPLIFIED · 2026</span>
       </div>
     </header>
@@ -147,7 +154,7 @@
         </div>
       </div>
 
-      <h2 class="text-xl font-bold text-white mb-1">Make A 5th Birthday Wish</h2>
+      <h2 class="text-xl font-bold text-white mb-1">Make A 5<sup>th</sup> Birthday Wish</h2>
       <p class="text-xs text-slate-400 mb-6">Tap the flame to extinguish the candle & make your wish!</p>
 
       <div onclick="blowCakeGuest()" class="cursor-pointer relative flex flex-col items-center my-4 select-none group">
@@ -160,7 +167,7 @@
 
         <div class="cake-layer-top w-56 h-14 rounded-2xl flex items-center justify-center -mb-2 z-20 px-3">
           <span class="text-xs font-black tracking-widest text-brand-volt uppercase drop-shadow-[0_0_8px_rgba(213,255,0,0.5)]">
-            ATHER LABS · 5TH
+            ATHER LABS · 5<sup>TH</sup>
           </span>
         </div>
 
@@ -193,7 +200,7 @@
       <form id="wish-form" onsubmit="submitGuestWish(event)" class="w-full flex flex-col gap-3.5">
         <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">Full Name & Team</label>
-          <input id="guest-name" type="text" required placeholder="e.g. Alex Nguyễn (AI Team)" class="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-brand-border text-white text-xs focus:border-brand-volt focus:outline-none focus:ring-1 focus:ring-brand-volt transition-all">
+          <input id="guest-name" type="text" required placeholder="e.g. Alex Nguyễn (HR Team)" class="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-brand-border text-white text-xs focus:border-brand-volt focus:outline-none focus:ring-1 focus:ring-brand-volt transition-all">
         </div>
 
         <div>
@@ -332,7 +339,7 @@
       <div class="flex items-center gap-4">
         <img src="https://a5.atherlabs.com/images/a5-logo-03d92851fcd8.webp" alt="Ather Labs" class="w-14 h-14 object-contain drop-shadow-[0_0_15px_rgba(213,255,0,0.6)]">
         <div>
-          <h1 class="text-xl font-black text-white tracking-widest uppercase">Ather Labs · 5th Birthday</h1>
+          <h1 class="text-xl font-black text-white tracking-widest uppercase">Ather Labs · 5<sup>th</sup> Birthday</h1>
           <span class="text-xs font-mono tracking-[0.4em] text-brand-volt">AMBITION, AMPLIFIED · 2026</span>
         </div>
       </div>
@@ -367,7 +374,7 @@
 
         <div class="cake-layer-top w-[500px] h-28 rounded-3xl flex items-center justify-center -mb-3 z-20 px-6">
           <span class="text-2xl font-black tracking-widest text-brand-volt uppercase drop-shadow-[0_0_15px_rgba(213,255,0,0.6)]">
-            ATHER LABS · 5TH
+            ATHER LABS · 5<sup>TH</sup>
           </span>
         </div>
 
@@ -379,7 +386,7 @@
 
         <div id="stage-4-celebration-banner" class="hidden mt-8 flex flex-col items-center animate-bounce">
           <span class="text-3xl font-black tracking-[0.4em] text-brand-volt uppercase drop-shadow-[0_0_20px_#D5FF00]">
-            HAPPY 5TH ANNIVERSARY!
+            HAPPY 5<sup>TH</sup> ANNIVERSARY!
           </span>
         </div>
       </div>
@@ -419,7 +426,6 @@
         const json = await res.json();
         
         if (json.status === 'success' && Array.isArray(json.data)) {
-          // Lọc ra các lời chúc mới mà màn hình chưa nhận được
           const newItems = json.data.filter(w => !state.processedWishIds.has(w.id));
           
           if (newItems.length > 0) {
@@ -428,21 +434,18 @@
               wish.displayIndex = state.wishes.length + 1;
               state.wishes.push(wish);
 
-              // Đẩy lần lượt từng thẻ vào màn LED với animation
               const wall = document.getElementById('led-stage-1');
               if (wall) {
                 const cardWrapper = document.createElement('div');
                 cardWrapper.innerHTML = createWishCardHtml(wish);
                 wall.prepend(cardWrapper.firstElementChild);
 
-                // Giữ tối đa 60 thẻ để tránh tràn RAM
                 while (wall.children.length > 60) {
                   wall.removeChild(wall.lastElementChild);
                 }
               }
             });
 
-            // Cập nhật bộ đếm
             const counter = document.getElementById('wish-counter');
             if (counter) counter.innerText = state.wishes.length;
 
@@ -452,7 +455,7 @@
           }
         }
       } catch (err) {
-        // Tắt thông báo console lỗi mạng để tránh spam
+        // Ignored to avoid log noise
       } finally {
         state.isFetching = false;
       }
@@ -541,7 +544,7 @@
       fetchWishesFromBackend();
       initRealtimeSync();
 
-      // AUTO-POLLING MỖI 1.5S: Giúp LED và Control tự động nảy số khi chạy stress test k6
+      // AUTO-POLLING MỖI 1.5S: Giúp LED và Control tự động nhận dữ liệu stress test k6
       setInterval(() => {
         fetchWishesFromBackend();
       }, 1500);
@@ -639,9 +642,7 @@
         deleted: false
       };
 
-      // Phát realtime cho màn LED
       broadcastMessage('NEW_WISH', payload);
-      // Ghi ngầm vào D1 Database
       syncWishToBackend(payload);
 
       document.getElementById('wish-form').classList.add('hidden');
@@ -737,7 +738,7 @@
           </p>
 
           <div class="flex items-center justify-between pt-1.5 border-t border-white/5 text-[10px]">
-            <span class="text-brand-volt font-bold">#AtherLabs5th</span>
+            <span class="text-brand-volt font-bold">#AtherLabs5<sup>th</sup></span>
             <span class="text-emerald-400 flex items-center gap-1 font-mono">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Live
             </span>
@@ -750,7 +751,6 @@
       if (state.processedWishIds.has(wish.id)) return;
       state.processedWishIds.add(wish.id);
 
-      // Đảm bảo số thứ tự luôn tăng dần theo danh sách thực tế
       wish.displayIndex = state.wishes.length + 1;
       state.wishes.push(wish);
 
@@ -765,7 +765,6 @@
         cardWrapper.innerHTML = createWishCardHtml(wish);
         wall.prepend(cardWrapper.firstElementChild);
 
-        // Giới hạn tối đa 60 thẻ trên DOM để tránh tràn RAM
         while (wall.children.length > 60) {
           wall.removeChild(wall.lastElementChild);
         }
@@ -821,7 +820,7 @@
           tile.classList.add('bg-[#080B0F]/80', 'text-slate-400', 'border-white/10');
           tile.innerHTML = `
             <span class="w-4 h-4 rounded-md bg-white/10 text-white font-mono text-[9px] flex items-center justify-center shrink-0">5</span>
-            <span class="font-medium text-slate-300">#AtherLabs5th</span>
+            <span class="font-medium text-slate-300">#AtherLabs5<sup>th</sup></span>
           `;
         }
 
@@ -991,7 +990,7 @@
       renderAdminWishList();
     }
 
-    // FIX HOÀN TOÀN NÚT REFRESH TRONG ADMIN PANEL
+    // Nút Refresh trong Admin Panel
     async function refreshAdminList(e) {
       const btn = e ? e.target : document.getElementById('admin-refresh-btn');
       if (btn) {
