@@ -9,9 +9,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
-  <!-- MQTT Paho Client -->
+  <!-- MQTT Paho Client for Real-time Cross-device Sync -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
-  <!-- QRCode.js CDN -->
+  <!-- QRCode.js CDN for Dynamic QR Generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   
   <!-- Local Stylesheet -->
@@ -90,7 +90,6 @@
   <!-- ==================== GUEST INTERFACE ==================== -->
   <main id="guest-view" class="w-full max-w-md mx-auto my-auto flex flex-col items-center py-4">
     
-    <!-- Header -->
     <header class="flex items-center gap-3 mb-6">
       <img src="https://a5.atherlabs.com/images/a5-logo-03d92851fcd8.webp" alt="Ather Labs 5th Birthday" class="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(213,255,0,0.5)]">
       <div class="flex flex-col">
@@ -423,11 +422,12 @@
           const counter = document.getElementById('wish-counter');
           if (counter) counter.innerText = state.wishes.length;
 
-          // Render lên màn hình LED (lấy 60 lời chúc mới nhất để tối ưu RAM)
+          // Render lên màn hình LED (lấy 60 lời chúc mới nhất)
           const wall = document.getElementById('led-stage-1');
           if (wall) {
             wall.innerHTML = '';
-            state.wishes.slice(-60).forEach(w => {
+            state.wishes.slice(-60).forEach((w, idx) => {
+              w.displayIndex = w.index || (idx + 1);
               const cardWrapper = document.createElement('div');
               cardWrapper.innerHTML = createWishCardHtml(w);
               wall.prepend(cardWrapper.firstElementChild);
@@ -439,7 +439,7 @@
           saveWishesToStorage();
         }
       } catch (err) {
-        console.warn('Backend sync note (running offline fallback):', err);
+        console.warn('Backend sync note:', err);
       }
     }
 
@@ -478,7 +478,8 @@
             const wall = document.getElementById('led-stage-1');
             if (wall) {
               wall.innerHTML = '';
-              state.wishes.slice(-60).forEach(w => {
+              state.wishes.slice(-60).forEach((w, idx) => {
+                w.displayIndex = w.displayIndex || w.index || (idx + 1);
                 const cardWrapper = document.createElement('div');
                 cardWrapper.innerHTML = createWishCardHtml(w);
                 wall.prepend(cardWrapper.firstElementChild);
@@ -521,9 +522,9 @@
     window.addEventListener('hashchange', checkRouting);
     window.addEventListener('load', () => {
       checkRouting();
-      restoreSavedData();          // Khôi phục bộ nhớ cục bộ
-      fetchWishesFromBackend();    // Kéo dữ liệu từ Cloudflare D1
-      initRealtimeSync();          // Kết nối kênh Realtime
+      restoreSavedData();
+      fetchWishesFromBackend();
+      initRealtimeSync();
     });
 
     // Dynamic QR Code Generation in Control Panel
@@ -618,9 +619,9 @@
         deleted: false
       };
 
-      // 1. Bắn qua kênh Realtime cho LED
+      // Phát realtime cho màn LED
       broadcastMessage('NEW_WISH', payload);
-      // 2. Ghi ngầm vào Cloudflare D1
+      // Ghi ngầm vào D1 Database
       syncWishToBackend(payload);
 
       document.getElementById('wish-form').classList.add('hidden');
@@ -696,12 +697,13 @@
     }
 
     function createWishCardHtml(wish) {
+      const displayNum = wish.displayIndex || wish.index || 1;
       return `
         <div id="card-${wish.id}" class="w-full bg-[#080B0F]/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between backdrop-blur-md shadow-lg transition-all hover:border-brand-volt/40">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2 overflow-hidden">
               <span class="w-6 h-6 rounded-lg bg-brand-volt text-black text-xs font-black flex items-center justify-center shrink-0">
-                ${wish.index || 1}
+                ${displayNum}
               </span>
               <span class="text-xs font-bold text-white truncate max-w-[150px]">
                 ${escapeHtml(wish.name)}
@@ -727,6 +729,9 @@
     function onReceiveWish(wish) {
       if (state.processedWishIds.has(wish.id)) return;
       state.processedWishIds.add(wish.id);
+
+      // Đảm bảo số thứ tự tự động tính tăng dần theo danh sách thực tế
+      wish.displayIndex = state.wishes.length + 1;
       state.wishes.push(wish);
 
       saveWishesToStorage();
@@ -740,7 +745,7 @@
         cardWrapper.innerHTML = createWishCardHtml(wish);
         wall.prepend(cardWrapper.firstElementChild);
 
-        // Tối ưu DOM: Giữ tối đa 60 thẻ hiển thị cùng lúc để màn LED không bị lag
+        // Giới hạn tối đa 60 thẻ trên DOM để tránh tràn RAM
         while (wall.children.length > 60) {
           wall.removeChild(wall.lastElementChild);
         }
@@ -937,10 +942,10 @@
         return;
       }
 
-      list.innerHTML = activeWishes.map(wish => `
+      list.innerHTML = activeWishes.map((wish, idx) => `
         <div class="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between text-xs">
           <div class="flex flex-col pr-2">
-            <span class="font-bold text-white">${escapeHtml(wish.name)} <span class="text-[10px] text-slate-500 font-mono">(${wish.timeAgo || 'Now'})</span></span>
+            <span class="font-bold text-white">#${wish.displayIndex || wish.index || (idx + 1)} ${escapeHtml(wish.name)} <span class="text-[10px] text-slate-500 font-mono">(${wish.timeAgo || 'Now'})</span></span>
             <span class="text-slate-300 italic text-[11px] line-clamp-1">"${escapeHtml(wish.message)}"</span>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
