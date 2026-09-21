@@ -9,7 +9,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
-  <!-- MQTT Paho Client for Real-time Cross-device Sync -->
+  <!-- MQTT Paho Client -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
   
   <!-- Local Stylesheet -->
@@ -45,23 +45,15 @@
       background-image: radial-gradient(circle at center, rgba(213, 255, 0, 0.05) 0%, transparent 70%),
                         repeating-radial-gradient(circle at center, rgba(255, 255, 255, 0.012) 0, rgba(255, 255, 255, 0.012) 1px, transparent 1px, transparent 24px);
     }
-    /* Flame Animation */
-    .glow-candle-capsule {
-      animation: flameFlicker 1.4s infinite alternate ease-in-out;
+    /* Flame capsule styling matching brand */
+    .capsule-flame {
+      background: linear-gradient(180deg, #FFFFFF 0%, #F5FFA6 40%, #D5FF00 100%);
+      box-shadow: 0 0 20px rgba(213, 255, 0, 0.9), 0 0 40px rgba(213, 255, 0, 0.6), inset 0 0 8px #FFFFFF;
+      animation: flamePulse 1.2s infinite alternate ease-in-out;
     }
-    @keyframes flameFlicker {
-      0% {
-        box-shadow: 0 0 16px rgba(213, 255, 0, 0.85), 0 0 32px rgba(213, 255, 0, 0.5);
-        transform: scale(1);
-      }
-      100% {
-        box-shadow: 0 0 28px rgba(229, 255, 77, 1), 0 0 45px rgba(213, 255, 0, 0.7);
-        transform: scale(1.05) translateY(-2px);
-      }
-    }
-    /* Swarm Matrix Flight Animation */
-    .swarm-tile {
-      transition: all 1.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+    @keyframes flamePulse {
+      0% { transform: scale(1); filter: drop-shadow(0 0 10px #D5FF00); }
+      100% { transform: scale(1.06) translateY(-2px); filter: drop-shadow(0 0 25px #E5FF4D); }
     }
     .cake-layer-top {
       background: linear-gradient(180deg, #151921 0%, #0E1219 100%);
@@ -74,8 +66,11 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
     }
     .candle-pillar {
-      background: linear-gradient(180deg, #FFFFFF 0%, #C3CBD5 50%, #64748B 100%);
-      box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 4px 12px rgba(0,0,0,0.6);
+      background: linear-gradient(180deg, #FFFFFF 0%, #E2E8F0 50%, #94A3B8 100%);
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.9), 0 4px 15px rgba(0,0,0,0.6);
+    }
+    .swarm-tile {
+      transition: all 1.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
   </style>
 </head>
@@ -105,7 +100,6 @@
         </div>
       </div>
 
-      <!-- Card Graphic -->
       <div onclick="nextGuestStep(2)" class="cursor-pointer group relative w-56 h-72 rounded-2xl bg-black/60 border border-white/10 p-5 flex flex-col items-center justify-between overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-105 active:scale-95">
         <div class="absolute inset-0 bg-gradient-to-b from-brand-volt/10 to-transparent pointer-events-none"></div>
         <div class="w-full flex justify-end">
@@ -132,7 +126,7 @@
       </button>
     </section>
 
-    <!-- STEP 1.2: BLOW CAKE (MATCHING IMAGE 1 EXACTLY) -->
+    <!-- STEP 1.2: BLOW CAKE -->
     <section id="guest-step-2" class="w-full bg-brand-card/95 border border-brand-border rounded-2xl p-6 backdrop-blur-xl shadow-2xl flex flex-col items-center text-center hidden">
       <div class="flex items-center justify-between w-full mb-4">
         <span class="px-2.5 py-0.5 rounded-full bg-brand-volt/10 text-brand-volt text-[11px] font-bold tracking-wider border border-brand-volt/30">STEP 1.2</span>
@@ -146,26 +140,25 @@
       <h2 class="text-xl font-bold text-white mb-1">Make A 5th Birthday Wish</h2>
       <p class="text-xs text-slate-400 mb-6">Tap the flame to extinguish the candle & make your wish!</p>
 
-      <!-- Custom Cyber Birthday Cake (Image 1 replica) -->
+      <!-- Cake Replica -->
       <div onclick="blowCakeGuest()" class="cursor-pointer relative flex flex-col items-center my-4 select-none group">
-        
-        <!-- Flame Capsule with Glow -->
-        <div id="cake-flame-guest" class="glow-candle-capsule w-6 h-10 rounded-full bg-gradient-to-t from-brand-volt via-[#F9FFE0] to-white mb-1 transition-all duration-500"></div>
+        <!-- Flame Capsule -->
+        <div id="cake-flame-guest" class="capsule-flame w-6 h-10 rounded-full mb-1 transition-all duration-500"></div>
         <div id="cake-smoke-guest" class="w-2 h-8 rounded-full bg-white/40 blur-xs -mt-8 opacity-0 transition-opacity duration-1000 pointer-events-none"></div>
 
         <!-- Pillar Candle '5' -->
         <div class="candle-pillar w-12 h-14 rounded-t-xl flex items-center justify-center -mb-0.5 z-10">
-          <span class="text-lg font-black text-slate-900 tracking-tight">5</span>
+          <span class="text-xl font-black text-slate-900 tracking-tight">5</span>
         </div>
 
-        <!-- Cake Tier 1 (Top) -->
+        <!-- Tier 1 -->
         <div class="cake-layer-top w-56 h-14 rounded-2xl flex items-center justify-center -mb-2 z-20 px-3">
           <span class="text-xs font-black tracking-widest text-brand-volt uppercase drop-shadow-[0_0_8px_rgba(213,255,0,0.5)]">
             ATHER LABS · 5TH
           </span>
         </div>
 
-        <!-- Cake Tier 2 (Bottom Base) -->
+        <!-- Tier 2 -->
         <div class="cake-layer-bottom w-64 h-16 rounded-2xl flex items-center justify-center z-10 px-4">
           <span class="text-xs font-black tracking-widest text-white uppercase">
             AMBITION, AMPLIFIED
@@ -190,7 +183,7 @@
       </div>
 
       <h2 class="text-xl font-bold text-white mb-1 text-center">Broadcast Your Wish</h2>
-      <p class="text-xs text-slate-400 mb-5 text-center">Your compact greeting will instantly assemble into the stage LED matrix.</p>
+      <p class="text-xs text-slate-400 mb-5 text-center">Your greeting will instantly assemble into the stage LED matrix.</p>
 
       <form id="wish-form" onsubmit="submitGuestWish(event)" class="w-full flex flex-col gap-3.5">
         <div>
@@ -269,17 +262,17 @@
           
           <button onclick="sendRemoteStage(2)" class="p-4 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all group">
             <span class="text-xs text-slate-400 block mb-1">STAGE 2.2</span>
-            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Form Swarm '5'</span>
+            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Form Full Matrix '5'</span>
           </button>
 
           <button onclick="sendRemoteStage(3)" class="p-4 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all group">
             <span class="text-xs text-slate-400 block mb-1">STAGE 2.3</span>
-            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Giant Cyber Cake</span>
+            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Giant Cyber Cake (Light)</span>
           </button>
 
           <button onclick="sendRemoteStage(4)" class="p-4 rounded-xl bg-white/5 hover:bg-brand-volt/10 border border-brand-border hover:border-brand-volt text-left transition-all group">
             <span class="text-xs text-slate-400 block mb-1">STAGE 2.4</span>
-            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Blow Flame & Fireworks</span>
+            <span class="text-sm font-bold text-white group-hover:text-brand-volt">Blow Candle & Celebration</span>
           </button>
         </div>
       </div>
@@ -324,21 +317,21 @@
     <!-- Central Interactive Arena -->
     <div id="led-arena" class="relative flex-1 w-full flex items-center justify-center overflow-hidden my-3">
       
-      <!-- Stage 2.1: Compact Horizontal Wish Grid (Image 2 style) -->
+      <!-- Stage 2.1: Compact Horizontal Wish Grid -->
       <div id="led-stage-1" class="absolute inset-0 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-4 overflow-y-auto content-start">
-        <!-- Live Wish Cards stream in here -->
+        <!-- Live Wish Cards Stream In Here -->
       </div>
 
       <!-- Stage 2.2: The Elastic Swarm Digit '5' -->
       <div id="led-stage-2" class="relative w-full h-full flex items-center justify-center hidden">
-        <div id="swarm-container" class="relative w-full h-full"></div>
+        <div id="swarm-container" class="relative w-full h-full flex items-center justify-center"></div>
       </div>
 
-      <!-- Stage 2.3 & 2.4: Giant Cyber Birthday Cake (Image 1 style) -->
+      <!-- Stage 2.3 & 2.4: Giant Cyber Birthday Cake -->
       <div id="led-stage-3" class="relative flex flex-col items-center justify-center hidden">
-        <!-- Giant Flame -->
-        <div id="cake-flame-led" class="glow-candle-capsule w-16 h-28 rounded-full bg-gradient-to-t from-brand-volt via-[#F9FFE0] to-white mb-2 transition-all duration-700"></div>
-        <div id="cake-smoke-led" class="w-4 h-24 rounded-full bg-white/40 blur-md -mt-20 opacity-0 transition-opacity duration-1000 pointer-events-none"></div>
+        <!-- Giant Flame Capsule (Crisp Glow, No Foggy Blur) -->
+        <div id="cake-flame-led" class="capsule-flame w-16 h-28 rounded-full mb-3 transition-all duration-700"></div>
+        <div id="cake-smoke-led" class="w-4 h-24 rounded-full bg-white/40 blur-md -mt-24 opacity-0 transition-opacity duration-1000 pointer-events-none"></div>
 
         <!-- Pillar Candle '5' -->
         <div class="candle-pillar w-28 h-36 rounded-t-3xl flex items-center justify-center -mb-1 z-10 shadow-2xl">
@@ -346,16 +339,26 @@
         </div>
 
         <!-- Tier 1 -->
-        <div class="cake-layer-top w-[480px] h-28 rounded-3xl flex items-center justify-center -mb-3 z-20 px-6">
+        <div class="cake-layer-top w-[500px] h-28 rounded-3xl flex items-center justify-center -mb-3 z-20 px-6">
           <span class="text-2xl font-black tracking-widest text-brand-volt uppercase drop-shadow-[0_0_15px_rgba(213,255,0,0.6)]">
             ATHER LABS · 5TH
           </span>
         </div>
 
         <!-- Tier 2 -->
-        <div class="cake-layer-bottom w-[580px] h-32 rounded-3xl flex items-center justify-center z-10 px-8">
+        <div class="cake-layer-bottom w-[600px] h-32 rounded-3xl flex items-center justify-center z-10 px-8">
           <span class="text-2xl font-black tracking-widest text-white uppercase">
             AMBITION, AMPLIFIED
+          </span>
+        </div>
+
+        <!-- Stage 2.4 Celebration Overlay Wishes & Text -->
+        <div id="stage-4-celebration-banner" class="hidden mt-6 flex flex-col items-center animate-bounce">
+          <span class="text-3xl font-black tracking-[0.4em] text-brand-volt uppercase drop-shadow-[0_0_20px_#D5FF00]">
+            HAPPY 5TH ANNIVERSARY!
+          </span>
+          <span id="stage-4-featured-wish" class="text-sm italic text-slate-200 mt-2 font-mono">
+            "Ambition Amplified · Conquering New Milestones"
           </span>
         </div>
       </div>
@@ -377,6 +380,7 @@
   <script>
     const state = {
       wishes: [],
+      processedWishIds: new Set(), // Chống duplicate lời chúc
       currentStage: 1,
       mqttClient: null,
       channel: 'atherlabs_5th_bday_prod_2026'
@@ -449,8 +453,10 @@
       const name = document.getElementById('guest-name').value.trim();
       const message = document.getElementById('guest-message').value.trim();
 
+      const uniqueId = 'wish_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+
       const payload = {
-        id: Date.now(),
+        id: uniqueId,
         index: state.wishes.length + 1,
         name: name,
         message: message,
@@ -472,7 +478,7 @@
       }
     }
 
-    // Real-time Sync (MQTT Over WSS + Local BroadcastChannel Fallback)
+    // Real-time Sync (MQTT Over WSS + Local Fallback with Deduplication)
     const localBus = new BroadcastChannel('ather_bday_bus');
     localBus.onmessage = (e) => handleIncomingMessage(e.data);
 
@@ -499,7 +505,7 @@
             if (badge) badge.innerHTML = '● REALTIME CONNECTED';
           },
           onFailure: () => {
-            console.warn('Realtime fallback to BroadcastChannel mode');
+            console.warn('Realtime fallback to BroadcastChannel');
           }
         });
       } catch (err) {
@@ -529,10 +535,10 @@
       }
     }
 
-    // Generate Compact Wish Card (Image 2 style)
+    // Generate Wish Card HTML
     function createWishCardHtml(wish) {
       return `
-        <div class="w-full bg-[#080B0F]/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between backdrop-blur-md shadow-lg transition-all hover:border-brand-volt/40">
+        <div id="card-${wish.id}" class="w-full bg-[#080B0F]/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between backdrop-blur-md shadow-lg transition-all hover:border-brand-volt/40 animate-fade-in">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2 overflow-hidden">
               <span class="w-6 h-6 rounded-lg bg-brand-volt text-black text-xs font-black flex items-center justify-center shrink-0">
@@ -542,7 +548,7 @@
                 ${escapeHtml(wish.name)}
               </span>
             </div>
-            <span class="text-[10px] text-slate-400 font-mono shrink-0">${wish.timeAgo || '1m ago'}</span>
+            <span class="text-[10px] text-slate-400 font-mono shrink-0">${wish.timeAgo || 'Just now'}</span>
           </div>
 
           <p class="text-xs italic text-slate-200 line-clamp-2 leading-snug mb-2">
@@ -560,11 +566,21 @@
     }
 
     function onReceiveWish(wish) {
+      // Deduplicate: Bỏ qua nếu lời chúc đã được tiếp nhận
+      if (state.processedWishIds.has(wish.id)) return;
+      state.processedWishIds.add(wish.id);
+
       state.wishes.push(wish);
       const counter = document.getElementById('wish-counter');
       if (counter) counter.innerText = state.wishes.length;
 
-      // Append into Stage 2.1 Wall
+      // Cập nhật banner ở Step 2.4 nếu có lời chúc mới nhất
+      const featured = document.getElementById('stage-4-featured-wish');
+      if (featured) {
+        featured.innerText = `"${escapeHtml(wish.message)}" — ${escapeHtml(wish.name)}`;
+      }
+
+      // Đưa vào Wish Wall (Stage 2.1)
       const wall = document.getElementById('led-stage-1');
       if (wall) {
         const cardWrapper = document.createElement('div');
@@ -572,76 +588,74 @@
         wall.prepend(cardWrapper.firstElementChild);
       }
 
-      // If currently in Swarm Stage 2.2, re-render swarm with new count
+      // Nếu đang ở Stage 2.2 thì vẽ lại ma trận 5
       if (state.currentStage === 2) {
-        buildSwarmDigit5();
+        buildFullSwarmDigit5();
       }
     }
 
-    // Digit '5' Path Normalized Coordinates (0.0 to 1.0)
-    const baseDigit5Points = [
-      // Top horizontal bar
-      {x: 0.20, y: 0.15}, {x: 0.30, y: 0.15}, {x: 0.40, y: 0.15}, {x: 0.50, y: 0.15}, {x: 0.60, y: 0.15}, {x: 0.70, y: 0.15}, {x: 0.80, y: 0.15},
-      // Left vertical stroke
-      {x: 0.20, y: 0.23}, {x: 0.20, y: 0.31}, {x: 0.20, y: 0.39},
-      // Middle bar
-      {x: 0.25, y: 0.45}, {x: 0.35, y: 0.45}, {x: 0.45, y: 0.45}, {x: 0.55, y: 0.45}, {x: 0.65, y: 0.45}, {x: 0.75, y: 0.48},
-      // Right loop
-      {x: 0.80, y: 0.56}, {x: 0.80, y: 0.65}, {x: 0.78, y: 0.74},
-      // Bottom loop back
-      {x: 0.70, y: 0.82}, {x: 0.60, y: 0.85}, {x: 0.50, y: 0.85}, {x: 0.40, y: 0.85}, {x: 0.30, y: 0.82}, {x: 0.22, y: 0.75}
+    // Tọa độ chuẩn 35 điểm neo tạo thành số 5 sắc nét
+    const fullDigit5Slots = [
+      // Thanh ngang trên cùng (Top bar)
+      {x: 0.15, y: 0.12}, {x: 0.25, y: 0.12}, {x: 0.35, y: 0.12}, {x: 0.45, y: 0.12}, {x: 0.55, y: 0.12}, {x: 0.65, y: 0.12}, {x: 0.75, y: 0.12}, {x: 0.85, y: 0.12},
+      // Cạnh dọc trên bên trái (Left vertical)
+      {x: 0.15, y: 0.20}, {x: 0.15, y: 0.28}, {x: 0.15, y: 0.36}, {x: 0.15, y: 0.44},
+      // Thanh ngang giữa (Middle bar)
+      {x: 0.25, y: 0.44}, {x: 0.35, y: 0.44}, {x: 0.45, y: 0.44}, {x: 0.55, y: 0.44}, {x: 0.65, y: 0.44}, {x: 0.75, y: 0.44},
+      // Vòng cung bên phải (Right arc)
+      {x: 0.82, y: 0.52}, {x: 0.85, y: 0.60}, {x: 0.85, y: 0.68}, {x: 0.82, y: 0.76},
+      // Đáy bo tròn dưới (Bottom curve back)
+      {x: 0.75, y: 0.84}, {x: 0.65, y: 0.88}, {x: 0.55, y: 0.88}, {x: 0.45, y: 0.88}, {x: 0.35, y: 0.86}, {x: 0.25, y: 0.82}, {x: 0.16, y: 0.74},
+      // Các điểm hạt hỗ trợ mật độ
+      {x: 0.20, y: 0.12}, {x: 0.50, y: 0.44}, {x: 0.80, y: 0.64}, {x: 0.70, y: 0.86}, {x: 0.40, y: 0.88}, {x: 0.15, y: 0.32}
     ];
 
-    // Build Elastic Swarm Matrix for Any Number of Wishes
-    function buildSwarmDigit5() {
+    // Tạo số 5 hoàn chỉnh: Dù ít lời chúc vẫn luôn đủ 35 điểm tạo hình số 5
+    function buildFullSwarmDigit5() {
       const container = document.getElementById('swarm-container');
       if (!container) return;
       container.innerHTML = '';
 
-      const count = state.wishes.length;
-      if (count === 0) return;
-
       const rect = container.getBoundingClientRect();
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
-      const scaleX = Math.min(rect.width * 0.7, 600);
-      const scaleY = Math.min(rect.height * 0.75, 650);
+      const scaleX = Math.min(rect.width * 0.75, 680);
+      const scaleY = Math.min(rect.height * 0.80, 700);
 
-      // Render all wishes as flying particle tiles
-      state.wishes.forEach((wish, idx) => {
-        // Interpolate position along the path of '5'
-        const t = (idx / count) * (baseDigit5Points.length - 1);
-        const p1 = baseDigit5Points[Math.floor(t)];
-        const p2 = baseDigit5Points[Math.ceil(t)] || p1;
-        const subT = t - Math.floor(t);
-
-        const targetNormX = p1.x + (p2.x - p1.x) * subT;
-        const targetNormY = p1.y + (p2.y - p1.y) * subT;
-
-        const posX = centerX - (scaleX / 2) + targetNormX * scaleX;
-        const posY = centerY - (scaleY / 2) + targetNormY * scaleY;
+      fullDigit5Slots.forEach((slot, idx) => {
+        const posX = centerX - (scaleX / 2) + slot.x * scaleX;
+        const posY = centerY - (scaleY / 2) + slot.y * scaleY;
 
         const tile = document.createElement('div');
-        tile.className = 'swarm-tile absolute px-2 py-1 rounded-lg bg-brand-volt text-black border border-white font-bold shadow-[0_0_12px_#D5FF00] flex items-center justify-center text-[10px] truncate max-w-[120px] select-none';
-        
-        // Random initial explosion position for entry fly-in
-        const randX = Math.random() * rect.width;
-        const randY = Math.random() * rect.height;
+        tile.className = 'swarm-tile absolute px-2.5 py-1.5 rounded-xl border flex items-center justify-center text-[10px] select-none';
+
+        // Nếu có lời chúc thật thì gán tên khách, ngược lại tạo hạt năng lượng Neon Volt
+        const wish = state.wishes[idx % (state.wishes.length || 1)];
+        if (state.wishes.length > 0 && wish) {
+          tile.classList.add('bg-brand-volt', 'text-black', 'font-black', 'border-white', 'shadow-[0_0_15px_#D5FF00]');
+          tile.innerHTML = `<span class="truncate max-w-[130px]">★ ${escapeHtml(wish.name)}</span>`;
+        } else {
+          tile.classList.add('bg-[#D5FF00]/20', 'text-brand-volt', 'font-mono', 'border-brand-volt/40', 'shadow-[0_0_8px_rgba(213,255,0,0.3)]');
+          tile.innerHTML = `<span>#AtherLabs</span>`;
+        }
+
+        // Vị trí nổ ban đầu ngoài màn hình
+        const randX = (Math.random() - 0.5) * rect.width * 1.5 + centerX;
+        const randY = (Math.random() - 0.5) * rect.height * 1.5 + centerY;
         tile.style.left = `${randX}px`;
         tile.style.top = `${randY}px`;
-        tile.style.transform = `scale(0.2) rotate(${(Math.random() - 0.5) * 60}deg)`;
+        tile.style.transform = `scale(0.1) rotate(${(Math.random() - 0.5) * 90}deg)`;
         tile.style.opacity = '0';
-        tile.innerHTML = `<span>#${wish.index || idx + 1} ${escapeHtml(wish.name)}</span>`;
         container.appendChild(tile);
 
-        // Animate fly-in to lock into digit '5'
+        // Hiệu ứng bay vào lắp ráp số 5
         requestAnimationFrame(() => {
           setTimeout(() => {
             tile.style.left = `${posX}px`;
             tile.style.top = `${posY}px`;
             tile.style.transform = 'scale(1) rotate(0deg)';
             tile.style.opacity = '1';
-          }, 30 + idx * 15);
+          }, 40 + idx * 25);
         });
       });
     }
@@ -651,22 +665,34 @@
       const s1 = document.getElementById('led-stage-1');
       const s2 = document.getElementById('led-stage-2');
       const s3 = document.getElementById('led-stage-3');
+      const flame = document.getElementById('cake-flame-led');
+      const smoke = document.getElementById('cake-smoke-led');
+      const banner = document.getElementById('stage-4-celebration-banner');
 
       s1.classList.add('hidden');
       s2.classList.add('hidden');
       s3.classList.add('hidden');
+      if (banner) banner.classList.add('hidden');
 
       if (stageNum === 1) {
         s1.classList.remove('hidden');
       } else if (stageNum === 2) {
         s2.classList.remove('hidden');
-        buildSwarmDigit5();
-      } else if (stageNum === 3 || stageNum === 4) {
+        buildFullSwarmDigit5();
+      } else if (stageNum === 3) {
+        // Step 2.3: Thắp nến rực rỡ
         s3.classList.remove('hidden');
-        if (stageNum === 4) {
-          extinguishLedCake();
-          triggerFireworks();
+        if (flame) {
+          flame.style.opacity = '1';
+          flame.style.transform = 'scale(1)';
         }
+        if (smoke) smoke.style.opacity = '0';
+      } else if (stageNum === 4) {
+        // Step 2.4: Thổi nến + Pháo hoa + Lời chúc ăn mừng
+        s3.classList.remove('hidden');
+        extinguishLedCake();
+        triggerFireworks();
+        if (banner) banner.classList.remove('hidden');
       }
     }
 
@@ -684,21 +710,21 @@
 
     function triggerFireworks() {
       if (typeof confetti !== 'function') return;
-      const end = Date.now() + 3.5 * 1000;
+      const end = Date.now() + 4 * 1000;
       const colors = ['#D5FF00', '#FFFFFF', '#65A30D'];
 
       (function frame() {
         confetti({
-          particleCount: 5,
+          particleCount: 6,
           angle: 60,
-          spread: 55,
+          spread: 60,
           origin: { x: 0 },
           colors: colors
         });
         confetti({
-          particleCount: 5,
+          particleCount: 6,
           angle: 120,
-          spread: 55,
+          spread: 60,
           origin: { x: 1 },
           colors: colors
         });
@@ -711,6 +737,7 @@
 
     function clearStage() {
       state.wishes = [];
+      state.processedWishIds.clear();
       document.getElementById('led-stage-1').innerHTML = '';
       document.getElementById('wish-counter').innerText = '0';
       const container = document.getElementById('swarm-container');
