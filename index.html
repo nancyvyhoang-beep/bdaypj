@@ -7,12 +7,30 @@
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Canvas Confetti -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
-  <!-- MQTT Paho Client for Real-time Cross-device Sync -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
-  <!-- QRCode.js CDN for Dynamic QR Generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Canvas Confetti: Ưu tiên local js/, tự động fallback CDN nếu chưa tải file -->
+  <script src="js/confetti.browser.min.js"></script>
+  <script>
+    if (typeof confetti !== 'function') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- MQTT Paho Client: Ưu tiên local js/, tự động fallback CDN -->
+  <script src="js/mqttws31.min.js"></script>
+  <script>
+    if (typeof Paho === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- QRCode.js: Ưu tiên local js/, tự động fallback CDN -->
+  <script src="js/qrcode.min.js"></script>
+  <script>
+    if (typeof QRCode === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');
+    }
+  </script>
   
   <!-- Local Stylesheet -->
   <link rel="stylesheet" href="stylesheet.css">
@@ -239,7 +257,7 @@
           </div>
         </div>
         <span id="mqtt-status-badge" class="px-2.5 py-1 rounded-full text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-          ● REALTIME READY
+          ● CONNECTING...
         </span>
       </div>
 
@@ -653,15 +671,29 @@
       }
     }
 
-    // Real-time Sync (MQTT + BroadcastChannel)
+    // Real-time Sync (MQTT Failover + BroadcastChannel)
     const localBus = new BroadcastChannel('ather_bday_bus');
     localBus.onmessage = (e) => handleIncomingMessage(e.data);
 
+    // Danh sách Broker dự phòng để tự động failover
+    const MQTT_BROKERS = [
+      { host: 'broker.emqx.io', port: 8084, name: 'EMQX' },
+      { host: 'broker.hivemq.com', port: 8884, name: 'HIVEMQ' }
+    ];
+    let currentBrokerIndex = 0;
+
     function initRealtimeSync() {
+      if (typeof Paho === 'undefined' || !Paho.MQTT) {
+        console.warn('Paho MQTT script not loaded yet, will retry...');
+        setTimeout(initRealtimeSync, 1000);
+        return;
+      }
+
       try {
+        const broker = MQTT_BROKERS[currentBrokerIndex];
         // Đảm bảo Client ID duy nhất tuyệt đối để không bị đè kết nối giữa các máy Control
         const clientId = 'ather_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
-        state.mqttClient = new Paho.MQTT.Client('broker.emqx.io', 8084, clientId);
+        state.mqttClient = new Paho.MQTT.Client(broker.host, broker.port, clientId);
         
         state.mqttClient.onMessageArrived = (message) => {
           try {
@@ -674,8 +706,9 @@
 
         state.mqttClient.onConnectionLost = (responseObject) => {
           if (responseObject.errorCode !== 0) {
-            console.warn('Realtime lost, reconnecting...', responseObject.errorMessage);
-            setTimeout(initRealtimeSync, 3000);
+            console.warn(`Realtime connection lost on ${broker.name}. Switching broker...`, responseObject.errorMessage);
+            currentBrokerIndex = (currentBrokerIndex + 1) % MQTT_BROKERS.length;
+            setTimeout(initRealtimeSync, 2000);
           }
         };
 
@@ -687,19 +720,23 @@
           onSuccess: () => {
             state.mqttClient.subscribe(state.channel);
             const badge = document.getElementById('mqtt-status-badge');
-            if (badge) badge.innerHTML = '● REALTIME CONNECTED';
+            if (badge) badge.innerHTML = `● REALTIME CONNECTED (${broker.name})`;
 
             // Yêu cầu đồng bộ dữ liệu từ các máy đang mở khác
             if (window.location.hash === '#control') {
               broadcastMessage('REQUEST_SYNC_DATA', {});
             }
           },
-          onFailure: () => {
-            console.warn('MQTT connect failed, using BroadcastChannel fallback');
+          onFailure: (err) => {
+            console.warn(`MQTT connect failed on ${broker.name}, switching to next broker:`, err);
+            currentBrokerIndex = (currentBrokerIndex + 1) % MQTT_BROKERS.length;
+            setTimeout(initRealtimeSync, 2000);
           }
         });
       } catch (err) {
-        console.warn('Realtime init error', err);
+        console.warn('Realtime init error, retrying...', err);
+        currentBrokerIndex = (currentBrokerIndex + 1) % MQTT_BROKERS.length;
+        setTimeout(initRealtimeSync, 3000);
       }
     }
 
