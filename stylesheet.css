@@ -8,73 +8,57 @@
    và tích hợp bộ font fallback dự phòng mượt mà.
 */
 @font-face {
-  font-family: 'FF Good Pro';
-  src: url('FFGoodPro-Normal.woff2') format('woff2'),
-       url('FFGoodPro-Normal.woff') format('woff'),
-       url('FFGoodPro-Normal.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'FF Good Pro';
+    src: url('FFGoodPro-Regular.woff2') format('woff2'),
+         url('FFGoodPro-Regular.woff') format('woff'),
+         url('FFGoodPro-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'FF Good Pro';
-  src: url('FFGoodPro-Medium.woff2') format('woff2'),
-       url('FFGoodPro-Medium.woff') format('woff'),
-       url('FFGoodPro-Medium.ttf') format('truetype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'FF Good Pro';
+    src: url('FFGoodPro-Ultra.woff2') format('woff2'),
+         url('FFGoodPro-Ultra.woff') format('woff'),
+         url('FFGoodPro-Ultra.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'FF Good Pro';
-  src: url('FFGoodPro-Bold.woff2') format('woff2'),
-       url('FFGoodPro-Bold.woff') format('woff'),
-       url('FFGoodPro-Bold.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'FF Good Pro';
+    src: url('FFGoodPro-UltraItalic.woff2') format('woff2'),
+         url('FFGoodPro-UltraItalic.woff') format('woff'),
+         url('FFGoodPro-UltraItalic.ttf') format('truetype');
+    font-weight: 900;
+    font-style: italic;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'FF Good Pro';
-  src: url('FFGoodPro-Black.woff2') format('woff2'),
-       url('FFGoodPro-Black.woff') format('woff'),
-       url('FFGoodPro-Black.ttf') format('truetype');
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'FF Good Pro Wide';
+    src: url('FFGoodProWide-Regular.woff2') format('woff2'),
+         url('FFGoodProWide-Regular.woff') format('woff'),
+         url('FFGoodProWide-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'FF Good Pro Ultra';
-  src: url('FFGoodPro-Ultra.woff2') format('woff2'),
-       url('FFGoodPro-Ultra.woff') format('woff'),
-       url('FFGoodPro-Ultra.ttf') format('truetype');
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'FF Good Pro News';
+    src: url('FFGoodPro-NewsItalic.woff2') format('woff2'),
+         url('FFGoodPro-NewsItalic.woff') format('woff');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
 }
 
-@font-face {
-  font-family: 'FF Good Pro News';
-  src: url('FFGoodProNews-Regular.woff2') format('woff2'),
-       url('FFGoodProNews-Regular.woff') format('woff'),
-       url('FFGoodProNews-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'FF Good Pro Wide';
-  src: url('FFGoodProWide-Bold.woff2') format('woff2'),
-       url('FFGoodProWide-Bold.woff') format('woff'),
-       url('FFGoodProWide-Bold.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+/* Ép toàn bộ web nhận font FF Good Pro */
+* {
+    font-family: 'FF Good Pro', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 /* 2. ROOT DESIGN TOKENS */
