@@ -1,0 +1,188 @@
+/* ==========================================================================
+   ATHER LABS 5TH BIRTHDAY — DESIGN SYSTEM & TYPOGRAPHY STYLESHEET
+   Brand: Ather Labs (Ambition, Amplified 2026)
+   ========================================================================== */
+
+/* 1. FONT-FACE DEFINITIONS (FF Good Pro Family)
+   Hỗ trợ nạp trực tiếp các file font đặt cùng thư mục (nếu có file .woff2/.woff/.ttf)
+   và tích hợp bộ font fallback dự phòng mượt mà.
+*/
+@font-face {
+  font-family: 'FF Good Pro';
+  src: url('FFGoodPro-Normal.woff2') format('woff2'),
+       url('FFGoodPro-Normal.woff') format('woff'),
+       url('FFGoodPro-Normal.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FF Good Pro';
+  src: url('FFGoodPro-Medium.woff2') format('woff2'),
+       url('FFGoodPro-Medium.woff') format('woff'),
+       url('FFGoodPro-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FF Good Pro';
+  src: url('FFGoodPro-Bold.woff2') format('woff2'),
+       url('FFGoodPro-Bold.woff') format('woff'),
+       url('FFGoodPro-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FF Good Pro';
+  src: url('FFGoodPro-Black.woff2') format('woff2'),
+       url('FFGoodPro-Black.woff') format('woff'),
+       url('FFGoodPro-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FF Good Pro Ultra';
+  src: url('FFGoodPro-Ultra.woff2') format('woff2'),
+       url('FFGoodPro-Ultra.woff') format('woff'),
+       url('FFGoodPro-Ultra.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FF Good Pro News';
+  src: url('FFGoodProNews-Regular.woff2') format('woff2'),
+       url('FFGoodProNews-Regular.woff') format('woff'),
+       url('FFGoodProNews-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FF Good Pro Wide';
+  src: url('FFGoodProWide-Bold.woff2') format('woff2'),
+       url('FFGoodProWide-Bold.woff') format('woff'),
+       url('FFGoodProWide-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 2. ROOT DESIGN TOKENS */
+:root {
+  --color-volt: #D5FF00;
+  --color-volt-dark: #ADC700;
+  --color-bg: #050709;
+  --color-card: #0D0F12;
+  --glow-intensity: 24px;
+  --slogan-spacing: 0.38em;
+  --card-radius: 1.5rem;
+  
+  --font-ather-sans: "FF Good Pro", "FF Good Pro News", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-ather-display: "FF Good Pro Ultra", "FF Good Pro Wide", "FF Good Pro", "Plus Jakarta Sans", sans-serif;
+  --font-ather-mono: "Space Grotesk", Menlo, Monaco, Consolas, monospace;
+}
+
+/* 3. BASE RESETS & SCROLLBAR */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: #F8FAFC;
+  font-family: var(--font-ather-sans);
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #080A0D;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-volt);
+  border-radius: 9999px;
+}
+
+/* 4. VISUAL EFFECT UTILITIES */
+.glow-volt {
+  box-shadow: 0 0 var(--glow-intensity) rgba(213, 255, 0, 0.45);
+}
+
+.glow-volt-lg {
+  box-shadow: 0 0 calc(var(--glow-intensity) * 2.2) rgba(213, 255, 0, 0.65);
+}
+
+.text-glow-volt {
+  color: var(--color-volt);
+  text-shadow: 0 0 16px rgba(213, 255, 0, 0.85), 0 0 32px rgba(213, 255, 0, 0.45);
+}
+
+.brand-slogan-tracking {
+  letter-spacing: var(--slogan-spacing);
+  word-spacing: 0.15em;
+}
+
+.brand-year-tracking {
+  letter-spacing: 0.32em;
+}
+
+.glass-ather {
+  background: rgba(13, 15, 18, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--card-radius);
+}
+
+.glass-ather-volt {
+  background: linear-gradient(145deg, rgba(213, 255, 0, 0.08) 0%, rgba(13, 15, 18, 0.95) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(213, 255, 0, 0.35);
+  border-radius: var(--card-radius);
+}
+
+.bg-ather-contour {
+  background-color: var(--color-bg);
+  background-image: 
+    radial-gradient(circle at center, rgba(213, 255, 0, 0.06) 0%, transparent 70%),
+    repeating-radial-gradient(circle at 50% 50%, transparent 0, transparent 18px, rgba(255, 255, 255, 0.025) 19px, transparent 20px);
+}
+
+/* 5. KEYFRAMES & ANIMATIONS */
+@keyframes wishPop {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.wish-item-enter {
+  animation: wishPop 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.85; transform: scale(0.98); }
+  100% { opacity: 1; transform: scale(1.05); }
+}
+
+.animate-flicker {
+  animation: flicker 0.18s infinite alternate;
+}
